@@ -4,6 +4,9 @@ import os
 import glob
 from scipy.interpolate import interp1d
 from scipy.interpolate import interp2d
+from matplotlib.pyplot import cycler
+from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+
 import xarray as xr
 
 path = os.getcwd().split('/')
@@ -101,10 +104,48 @@ def calc_mean_temperaure_region(data, Nz, xx, begin, end):
     return data_sel_mean
 
 ###############################################################################################################################################
-
+#Customizing matplotlib 
 label_size=18
 plt.rc('xtick', labelsize=label_size)
 plt.rc('ytick', labelsize=label_size)
+
+#Install the following package from (https://www.fabiocrameri.ch/colourmaps/) for inclusive color palletes
+#or comment set crameri_colors as False
+
+crameri_colors=True
+# crameri_colors=False
+if(crameri_colors):
+    def get_cycle(cmap, N=None, use_index="auto"):
+        if isinstance(cmap, str):
+            if use_index == "auto":
+                if cmap in ['Pastel1', 'Pastel2', 'Paired', 'Accent',
+                            'Dark2', 'Set1', 'Set2', 'Set3',
+                            'tab10', 'tab20', 'tab20b', 'tab20c']:
+                    use_index=True
+                else:
+                    use_index=False
+            cmap = matplotlib.cm.get_cmap(cmap)
+        if not N:
+            N = cmap.N
+        if use_index=="auto":
+            if cmap.N > 100:
+                use_index=False
+            elif isinstance(cmap, LinearSegmentedColormap):
+                use_index=False
+            elif isinstance(cmap, ListedColormap):
+                use_index=True
+        if use_index:
+            ind = np.arange(int(N)) % cmap.N
+            return cycler("color",cmap(ind))
+        else:
+            colors = cmap(np.linspace(0,1,N))
+            return cycler("color",colors)
+
+    from cmcrameri import cm as cr
+
+    n_colors = 10
+    # plt.rcParams["axes.prop_cycle"] = get_cycle(cr.romaO, n_colors)
+    plt.rcParams["axes.prop_cycle"] = get_cycle(cr.vikO, n_colors)
 
 ###############################################################################################################################################
 #Setting the kind of tectonic scenario and number of cores
@@ -609,7 +650,12 @@ else:
 
 fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2, constrained_layout=True, figsize=(20, 8), sharey=True)
 
-im = ax0.contourf(X / 1.0e3, (Z - thickness_sa) / 1.0e3, T,
+if(crameri_colors):
+    cmap=cr.imola
+else:
+    cmap="viridis"
+
+im = ax0.contourf(X / 1.0e3, (Z - thickness_sa) / 1.0e3, T, cmap=cmap,
                   levels=np.arange(0, np.max(T) + 100, 100))
 
 idx_center = int((Nx-1)/2)
