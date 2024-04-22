@@ -145,7 +145,9 @@ if(crameri_colors):
 
     n_colors = 10
     # plt.rcParams["axes.prop_cycle"] = get_cycle(cr.romaO, n_colors)
-    plt.rcParams["axes.prop_cycle"] = get_cycle(cr.vikO, n_colors)
+    # plt.rcParams["axes.prop_cycle"] = get_cycle(cr.oslo, n_colors)
+    # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", cr.osloS(np.linspace(0, 1, n_colors)))
+
 
 ###############################################################################################################################################
 #Setting the kind of tectonic scenario and number of cores
