@@ -146,7 +146,11 @@ if(crameri_colors):
     n_colors = 10
     # plt.rcParams["axes.prop_cycle"] = get_cycle(cr.romaO, n_colors)
     # plt.rcParams["axes.prop_cycle"] = get_cycle(cr.oslo, n_colors)
-    # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", cr.osloS(np.linspace(0, 1, n_colors)))
+    # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", cr.batlowKS(np.linspace(0, 1, 10)))
+    #From Color Universal Design (CUD): https://jfly.uni-koeln.de/color/
+    # plt.rcParams["axes.prop_cycle"] = plt.cycler("color", ["#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#000000"])
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", ['#88CCEE', '#44AA99', '#117733', '#332288', '#DDCC77', '#999933','#CC6677', '#882255', '#AA4499', '#585858'])
+    
 
 
 ###############################################################################################################################################
@@ -176,17 +180,17 @@ Nz = 201
 # thickness of sticky air layer (m)
 thickness_sa = 40 * 1.0e3
 #thickness of sediments (m)
-thickness_sed = 1 *1.0e3
+thickness_sed = 3 * 1.0e3
 # thickness of decolement (m)
-thickness_decolement = 2 *1.0e3
+thickness_decolement = 1 *1.0e3
 # thickness of upper crust (m)
-thickness_upper_crust = 22 * 1.0e3
+thickness_upper_crust = 21 * 1.0e3
 # thickness of lower crust (m)
-thickness_lower_crust = 15 * 1.0e3
+thickness_lower_crust = 10 * 1.0e3
 #Thickness of non cratonic lithosphere
-thickness_mlit = 85 * 1.0e3
+thickness_mlit = 90 * 1.0e3
 #thickness of cratonic lihosphere (upper)
-thickness_mlit_crat_up = 85 * 1.0e3
+thickness_mlit_crat_up = 90 * 1.0e3
 #thickness of cratonic lithosphere (bottom)
 thickness_mlit_crat_bot = 125 * 1.0e3
 
@@ -211,7 +215,7 @@ interfaces = {
         "seed_top": np.ones(Nx) * (thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust - seed_depth),
         "upper_crust": np.ones(Nx) * (thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust),
         "decolement": np.ones(Nx) * (thickness_sa + thickness_sed + thickness_decolement),
-        "sediments": np.ones(Nx) * (thickness_sa + thickness_sed + thickness_sa),
+        "sediments": np.ones(Nx) * (thickness_sa + thickness_sed),
         "air": np.ones(Nx) * (thickness_sa),
         }
 
@@ -264,7 +268,7 @@ ax.set_yticks(np.arange(-Lz / 1e3, 1 / 1e3, 50))
 ax.set_xlim([0, Lx/1000])
 ax.set_ylim([(-Lz + thickness_sa) / 1e3, 0 + thickness_sa / 1e3])
 
-ax.legend(loc='upper center', ncol=5)
+ax.legend(loc='lower center', ncol=5)
 ax.grid("-k", alpha=0.6)
 
 figname = "interfaces_teste"
@@ -277,7 +281,7 @@ fig.savefig(f"{figname}.png", dpi=200)
 #Viscosity scale factor
 C_air = 1.0
 C_sed = 1.0
-C_dec = 1.0
+C_dec = 0.1
 C_upper_crust = 1.0
 C_lower_crust = 100.0
 C_seed = 0.1
@@ -289,7 +293,7 @@ C_ast = 1.0
 #density (kg/m3)
 rho_air = 1.0
 rho_sed = 2700.0
-rho_dec = 2300.0
+rho_dec = 2350.0
 rho_upper_crust = 2700.0
 rho_lower_crust = 2800.0
 rho_seed = 2800.0
@@ -300,15 +304,15 @@ rho_ast = 3378.0
 
 #radiogenic heat production (W/kg)
 H_air = 0.0
-H_sed = 2.5e-6 / 2700.0
-H_dec = 2.5e-6 / 2700.0
-H_upper_crust = 2.5e-6 / 2700.0 #9.259E-10
-H_lower_crust = 0.8e-6 / 2800.0 #2.85E-10
-H_seed = 0.8e-6 / 2800.0
+H_sed = 1.25e-6 / 2700.0
+H_dec = 1.25e-6 / 2700.0
+H_upper_crust = 1.25e-6 / 2700.0 #9.259E-10
+H_lower_crust = 0.2e-6 / 2800.0 #2.85E-10
+H_seed = 0.2e-6 / 2800.0
 H_mlit = 9.0e-12
 H_mlit_uc = 9.0e-12
 H_mlit_lc = 9.0e-12
-H_ast = 7.38e-12 #Turccote book #Default is 0.0
+H_ast = 0.0 #Turccote book: 7.38e-12 #Default is 0.0
 
 #Pre exponential constant (Pa**-n s**-1)
 A_air = 1.0E-18
@@ -387,17 +391,17 @@ high_kappa_in_asthenosphere = True
 # high_kappa_in_asthenosphere = False #default
 
 #Convergence criteria
-denok                            = 1.0e-11
-particles_per_element            = 100
+denok                            = 1.0e-14
+particles_per_element            = 40
 
 #Surface constrains
 sp_surface_tracking              = True
 sp_surface_processes             = False
 
 #time constrains 
-time_max                         = 400.0e6
-dt_max                           = 5.0e3 #default
-step_print                       = 250
+time_max                         = 210.0e6
+dt_max                           = 10.0e3 #default
+step_print                       = 25
 
 #External inputs: bc velocity, velocity field, precipitation and
 #climate change
@@ -422,11 +426,11 @@ checkered = True
 top_normal_velocity                 = 'fixed'         # ok
 top_tangential_velocity             = 'free '         # ok
 bot_normal_velocity                 = 'fixed'         # ok
-bot_tangential_velocity             = 'free '         # ok
+bot_tangential_velocity             = 'free'         # ok
 left_normal_velocity                = 'fixed'         # ok
-left_tangential_velocity            = 'free '         # ok
+left_tangential_velocity            = 'fixed'         # ok
 right_normal_velocity               = 'fixed'         # ok
-right_tangential_velocity           = 'free'         # ok
+right_tangential_velocity           = 'fixed'         # ok
 
 # periodic_boundary = True
 periodic_boundary = False
@@ -461,8 +465,8 @@ particles_per_element               = {particles_per_element}          # default
 particles_perturb_factor            = 0.7           # default is 0.5 [values are between 0 and 1]
 rtol                                = 1.0e-7        # the absolute size of the residual norm (relevant only for iterative methods), default is 1.0E-5
 RK4                                 = Euler         # default is Euler [Euler/Runge-Kutta]
-Xi_min                              = 1.0e-7       # default is 1.0E-14
-random_initial_strain               = 0.2           # default is 0.0
+Xi_min                              = 1.0e-6       # default is 1.0E-14
+random_initial_strain               = 0.0           # default is 0.0
 pressure_const                      = -1.0          # default is -1.0 (not used) - useful only in horizontal 2D models
 initial_dynamic_range               = True         # default is False [True/False]
 periodic_boundary                   = False         # default is False [True/False]
@@ -517,7 +521,7 @@ thermal_diffusivity_coefficient     = 1.0e-6 #0.75e-6       #default is 1.0e-6  
 gravity_acceleration                = 10.0          # ok
 density_mantle                      = 3300.         # ok
 external_heat                       = 0.0e-12       # ok
-heat_capacity                       = 1250         # ok #default is 1250
+heat_capacity                       = 700.         # ok #default is 1250
 non_linear_method                   = on            # ok
 adiabatic_component                 = on            # ok
 radiogenic_component                = on            # ok
@@ -537,7 +541,8 @@ top_temperature                     = {top_temperature}         # ok
 bot_temperature                     = {bot_temperature}         # ok
 left_temperature                    = {left_temperature}         # ok
 right_temperature                   = {right_temperature}         # ok
-rheology_model                      = 19             # ok
+rheology_model                      = 9             # ok
+
 T_initial                           = 3             # ok
 """
 
@@ -661,7 +666,7 @@ im = ax0.contourf(X / 1.0e3, (Z - thickness_sa) / 1.0e3, T, cmap=cmap,
                   levels=np.arange(0, np.max(T) + 100, 100))
 
 idx_center = int((Nx-1)/2)
-ax1.plot(T[:, 0], (z - thickness_sa) / 1.0e3, "-k", label=r'T$_{cratonic}$')
+ax1.plot(T[:, 0], (z - thickness_sa) / 1.0e3, "--k", label=r'T$_{cratonic}$')
 ax1.plot(T[:, idx_center], (z - thickness_sa) / 1.0e3, "--r", label=r'T$_{non cratonic}$')
 
 ax_aux = ax1.twiny()
@@ -670,7 +675,7 @@ for label, layer in interfaces.items():
     # print(label, "(size): ", np.size(layer))
     # ax1.plot(x/1.0E3, (-layer + thickness_sa)/1.0E3, label=f"{label}")
     ax0.plot(x/1.0E3, (layer - thickness_sa)/1.0E3, color='xkcd:white')
-    ax_aux.plot(x/1.0E3, (layer - thickness_sa)/1.0E3, label=label)
+    ax_aux.plot(x/1.0E3, (layer - thickness_sa)/1.0E3, label=label, lw=2)
 
 T_xlim = 2000 #oC
 
@@ -697,7 +702,7 @@ ax_aux.set_xlim(0, Lx/1000)
 ax_aux.set_ylim((Lz - thickness_sa) / 1.0e3, -thickness_sa / 1000)
 
 ax1.legend(loc='upper center', fontsize=14, ncol=2)
-ax_aux.legend(loc='lower center', fontsize=14, ncol=5, handletextpad=0.2, handlelength=.5)
+ax_aux.legend(loc='lower center', fontsize=12, ncol=5, handletextpad=0.2, handlelength=.8)
 
 plt.savefig("initial_temperature_field.png")
 
@@ -969,28 +974,13 @@ np.savetxt('infos_'+path[-1] + '.txt', scenario_infos, fmt="%s")
 #Creating run_scripts
 ##############################################################################
 
-gcloud = False
 linux = True
-mac = False
-aguia = True
+mac = True
+aguia = False
 
-if(gcloud):
-    run_gcloud = f'''
-            #!/bin/bash
-            MPI_PATH=$HOME/opt/petsc/arch-label-optimized/bin
-            MANDYOC_PATH=$HOME/opt/mandyoc
-            NUMBER_OF_CORES=6
-            touch FD.out
-            $MPI_PATH/mpirun -n $NUMBER_OF_CORES $MANDYOC_PATH/mandyoc -seed 0,2 -strain_seed 0.0,1.0 | tee FD.out
-            bash /home/joao_macedo/Doutorado/cenarios/mandyoc/scripts/zipper_gcloud.sh
-            bash /home/joao_macedo/Doutorado/cenarios/mandyoc/scripts/clean_gcloud.sh
-            sudo poweroff
-        '''
-    with open('run_gcloud.sh', 'w') as f:
-        for line in run_gcloud.split('\n'):
-            line = line.strip()
-            if len(line):
-                f.write(' '.join(line.split()) + '\n')
+mandyoc_options = '-seed 0,5,8 -strain_seed 0.0,1.0,1.0'
+
+
 if(linux):
     run_linux = f'''
             #!/bin/bash
@@ -998,7 +988,7 @@ if(linux):
             MANDYOC_PATH=$HOME/opt/mandyoc
             NUMBER_OF_CORES=12
             touch FD.out
-            $MPI_PATH/mpirun -n $NUMBER_OF_CORES $MANDYOC_PATH/mandyoc -seed 0,5 -strain_seed 0.0,1.0 | tee FD.out
+            $MPI_PATH/mpirun -n $NUMBER_OF_CORES $MANDYOC_PATH/mandyoc {mandyoc_options} | tee FD.out
         '''
     with open('run-linux.sh', 'w') as f:
         for line in run_linux.split('\n'):
@@ -1007,16 +997,67 @@ if(linux):
                 f.write(' '.join(line.split()) + '\n')
 
 if(mac):
-    run_mac = f'''
-            #!/bin/bash
-            MPI_PATH=$HOME/opt/petsc/arch-label-optimized/bin
-            MANDYOC_PATH=$HOME/opt/mandyoc
-            NUMBER_OF_CORES=6
-            touch FD.out
-            $MPI_PATH/mpirun -n $NUMBER_OF_CORES $MANDYOC_PATH/mandyoc -seed 0,2 -strain_seed 0.0,1.0 | tee FD.out
-            bash $HOME/Doutorado/cenarios/mandyoc/scripts/zipper_gcloud.sh
-            #bash $HOME/Doutorado/cenarios/mandyoc/scripts/clean_gcloud.sh
-        '''
+    claudio=True
+    dirname = '${PWD##*/}'
+
+    if(claudio):
+        PETSC_DIR = '/Users/claudiomora/Documents/petsc'
+        PETSC_ARCH = 'arch-label-optimized/bin/mpiexec'
+        MANDYOC = '/Users/claudiomora/Documents/mandyoc/bin/mandyoc'
+
+        run_mac = f'''
+                    #!/bin/bash
+                    touch FD.out
+                    {PETSC_DIR}/{PETSC_ARCH} -n 16 {MANDYOC} {mandyoc_options} | tee FD.log
+                    
+                    DIRNAME={dirname}
+
+                    zip $DIRNAME.zip interfaces.txt param.txt input*_0.txt vel_bc.txt velz_bc.txt run*.sh
+                    zip -u $DIRNAME.zip bc_velocity_*.txt
+                    zip -u $DIRNAME.zip density_*.txt
+                    zip -u $DIRNAME.zip heat_*.txt
+                    zip -u $DIRNAME.zip pressure_*.txt
+                    zip -u $DIRNAME.zip sp_surface_global_*.txt
+                    zip -u $DIRNAME.zip strain_*.txt
+                    zip -u $DIRNAME.zip temperature_*.txt
+                    zip -u $DIRNAME.zip time_*.txt
+                    zip -u $DIRNAME.zip velocity_*.txt
+                    zip -u $DIRNAME.zip viscosity_*.txt
+                    zip -u $DIRNAME.zip scale_bcv.txt
+                    zip -u $DIRNAME.zip step*.txt
+                    zip -u $DIRNAME.zip *.bin*
+                    zip -u $DIRNAME.zip *.log
+                    
+
+                    #rm *.log
+                    rm vel_bc*
+                    rm velz*
+                    rm bc_velocity*
+                    rm velocity*
+                    rm step*
+                    rm temperature*
+                    rm density*
+                    rm viscosity*
+                    rm heat*
+                    rm strain_*
+                    rm time*
+                    rm pressure_*
+                    rm sp_surface_global*
+                    rm scale_bcv.txt
+                    rm *.bin*
+
+                '''
+    else:
+        run_mac = f'''
+                #!/bin/bash
+                MPI_PATH=$HOME/opt/petsc/arch-label-optimized/bin
+                MANDYOC_PATH=$HOME/opt/mandyoc
+                NUMBER_OF_CORES=6
+                touch FD.out
+                $MPI_PATH/mpirun -n $NUMBER_OF_CORES $MANDYOC_PATH/mandyoc {mandyoc_options} | tee FD.out
+                bash $HOME/Doutorado/cenarios/mandyoc/scripts/zipper_gcloud.sh
+                #bash $HOME/Doutorado/cenarios/mandyoc/scripts/clean_gcloud.sh
+            '''
     with open('run_mac.sh', 'w') as f:
         for line in run_mac.split('\n'):
             line = line.strip()
@@ -1036,11 +1077,6 @@ if(aguia):
     if(aguia_machine == 'aguia3'):
         partition = 'SP3'
         main_folders =  '/scratch/8672526'
-
-    if(scenario_kind == 'rifting'):
-        mandyoc_options = '-seed 0,2 -strain_seed 0.0,1.0'
-    else:
-        mandyoc_options = '-seed 0 -strain_seed 0.0'
 
     run_aguia = f'''
             #!/usr/bin/bash
