@@ -986,7 +986,7 @@ if(linux):
             #!/bin/bash
             MPI_PATH=$HOME/opt/petsc/arch-label-optimized/bin
             MANDYOC_PATH=$HOME/opt/mandyoc
-            NUMBER_OF_CORES=12
+            NUMBER_OF_CORES=20
             touch FD.out
             $MPI_PATH/mpirun -n $NUMBER_OF_CORES $MANDYOC_PATH/mandyoc {mandyoc_options} | tee FD.out
         '''
