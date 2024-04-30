@@ -666,8 +666,8 @@ im = ax0.contourf(X / 1.0e3, (Z - thickness_sa) / 1.0e3, T, cmap=cmap,
                   levels=np.arange(0, np.max(T) + 100, 100))
 
 idx_center = int((Nx-1)/2)
-ax1.plot(T[:, 0], (z - thickness_sa) / 1.0e3, "--k", label=r'T$_{cratonic}$')
-ax1.plot(T[:, idx_center], (z - thickness_sa) / 1.0e3, "--r", label=r'T$_{non cratonic}$')
+ax1.plot(T[:, 0], (z - thickness_sa) / 1.0e3, "--k", label=r'T$_{\mathrm{cratonic}}$')
+ax1.plot(T[:, idx_center], (z - thickness_sa) / 1.0e3, "--r", label=r'T$_{\mathrm{non-cratonic}}$')
 
 ax_aux = ax1.twiny()
 
