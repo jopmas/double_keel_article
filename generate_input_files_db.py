@@ -231,11 +231,12 @@ interfaces['litho_nc'][Nx//2 - N_nc//2 : Nx//2 + N_nc//2] = thickness_sa + thick
 L_thinning = L_nc
 N_thinning = N_nc
 
-thinning = thickness_mlit_crat_up + thickness_mlit_crat_bot #reach the base of the lower crust
+# thinning = thickness_mlit_crat_up + thickness_mlit_crat_bot #reach the base of the lower crust
+thinning = thickness_mlit_crat_bot #reach the base of the lower crust
 interfaces['litho_crat_bot'][Nx//2 - N_thinning//2 : Nx//2 + N_thinning//2] = thickness_sa + thickness_crat_bot - thinning
 
 #Building upper craton
-thinning = thickness_mlit_crat_up
+thinning = 0.0#thickness_mlit_crat_up
 interfaces['litho_crat_up'][Nx//2 - N_thinning//2 : Nx//2 + N_thinning//2] = thickness_sa + thickness_crat_up - thinning
 
 #Building seed
@@ -297,9 +298,9 @@ rho_dec = 2350.0
 rho_upper_crust = 2700.0
 rho_lower_crust = 2800.0
 rho_seed = 2800.0
-rho_mlit = 3354.0
-rho_mlit_uc = 3354.0
-rho_mlit_lc = 3354.0
+rho_mlit = 3354.0 #phanerozoic
+rho_mlit_uc = 3310.0 #archean
+rho_mlit_lc = 3330.0 #proterozoic
 rho_ast = 3378.0
 
 #radiogenic heat production (W/kg)
