@@ -224,9 +224,11 @@ interfaces = {
 dx = Lx/(Nx-1)
 L_nc = 800.0e3 #m
 N_nc = int(L_nc//dx)
+n_retreat = 100 #points in x direction to retreat the left protion of cratonic lithosphere
+L_retreat = n_retreat * (x[1] - x[0])
 
 thickening = thickness_mlit #m
-interfaces['litho_nc'][Nx//2 - N_nc//2 : Nx//2 + N_nc//2] = thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickening
+interfaces['litho_nc'][Nx//2 - N_nc//2 - n_retreat: Nx//2 + N_nc//2] = thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickening
 
 #Building lower craton
 L_thinning = L_nc
@@ -234,11 +236,12 @@ N_thinning = N_nc
 
 # thinning = thickness_mlit_crat_up + thickness_mlit_crat_bot #reach the base of the lower crust
 thinning = thickness_mlit_crat_bot #reach the base of the lower crust
-interfaces['litho_crat_bot'][Nx//2 - N_thinning//2 : Nx//2 + N_thinning//2] = thickness_sa + thickness_crat_bot - thinning
+
+interfaces['litho_crat_bot'][Nx//2 - N_thinning//2 - n_retreat : Nx//2 + N_thinning//2] = thickness_sa + thickness_crat_bot - thinning
 
 #Building upper craton
 thinning = 0.0#thickness_mlit_crat_up
-interfaces['litho_crat_up'][Nx//2 - N_thinning//2 : Nx//2 + N_thinning//2] = thickness_sa + thickness_crat_up - thinning
+interfaces['litho_crat_up'][Nx//2 - N_thinning//2: Nx//2 + N_thinning//2] = thickness_sa + thickness_crat_up - thinning
 
 #Building seed
 # seed thickness (m)
@@ -644,7 +647,7 @@ if(preset == False):
     T_cratonic = np.ones_like(X) * T_cratonic[:, None] #(Nz, Nx)
     
     xcenter = Lx/2
-    xregion_cratonic = (X <= xcenter - L_nc/2) | (X >= xcenter + L_nc/2)
+    xregion_cratonic = (X <= xcenter - L_nc/2 - L_retreat) | (X >= xcenter + L_nc/2)
     xregion_non_cratonic = (X > xcenter - L_nc/2) & (X < xcenter + L_nc/2)
     T[xregion_cratonic] = T_cratonic[xregion_cratonic]
     # print('shape T: ', np.shape(T))
