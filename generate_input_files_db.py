@@ -225,7 +225,7 @@ dx = Lx/(Nx-1)
 L_nc = 800.0e3 #m
 N_nc = int(L_nc//dx)
 n_retreat = 100 #points in x direction to retreat the left protion of cratonic lithosphere
-L_retreat = n_retreat * (x[1] - x[0])
+L_retreat = n_retreat * dx #length of retreat
 
 thickening = thickness_mlit #m
 interfaces['litho_nc'][Nx//2 - N_nc//2 - n_retreat: Nx//2 + N_nc//2] = thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickening
