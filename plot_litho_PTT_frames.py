@@ -161,55 +161,160 @@ T = np.reshape(T,(steps,n))
 ####################################################################################################################
 
 particles_layers = trackdataset.particles_layers.values[::-1] #code of the tracked layers
-mlit_code = 1
-crust_code = 4 #lower crust
+
+asthenosphere_code = 0
+lower_craton_code = 1
+upper_craton_code = 2
+mantle_lithosphere_code = 3
+lower_crust1_code = 4
+seed_code = 5
+lower_crust2_code = 6
+upper_crust_code = 7
+decolement_code = 8
+sediments_code = 9
+air_code = 10
+
 T_initial = T[0]
 
-if(mlit_code in particles_layers):
-    cond_mlit = particles_layers == mlit_code
-    particles_mlit = particles_layers[cond_mlit]
+def take_three_particles(layer_codes, particles_layers, T_initial):
+    if(len(layer_codes) == 1):
+        cond = particles_layers == layer_codes[0]
+    else:
+        cond = (particles_layers == layer_codes[0]) | (particles_layers == layer_codes[1])
 
-    T_initial_mlit = T_initial[cond_mlit] #initial temperature of lithospheric mantle particles
-    T_initial_mlit_sorted = np.sort(T_initial_mlit)
+    particles_layer = particles_layers[cond]
 
-    Ti_mlit_max = np.max(T_initial_mlit_sorted)
-    mid_index = len(T_initial_mlit_sorted)//2
-    Ti_mlit_mid = T_initial_mlit_sorted[mid_index]
-    Ti_mlit_min = np.min(T_initial_mlit_sorted)
+    T_initial_layer = T_initial[cond] #initial temperature of lithospheric mantle particles
+    T_initial_layer_sorted = np.sort(T_initial_layer)
 
-    cond_mlit2plot = (T_initial == Ti_mlit_min) | (T_initial == Ti_mlit_mid) | (T_initial == Ti_mlit_max)
+    Ti_layer_max = np.max(T_initial_layer_sorted)
+    mid_index = len(T_initial_layer_sorted)//2
+    Ti_layer_mid = T_initial_layer_sorted[mid_index]
+    Ti_layer_min = np.min(T_initial_layer_sorted)
 
-    plot_mlit_particles = True
+    cond2plot = (T_initial == Ti_layer_min) | (T_initial == Ti_layer_mid) | (T_initial == Ti_layer_max)
 
-    dict_mlit_markers = {Ti_mlit_max: '*',
-                         Ti_mlit_mid: '^',
-                         Ti_mlit_min: 'D'}
+    return cond2plot , Ti_layer_max, Ti_layer_mid, Ti_layer_min
 
-    dict_mlit_colors = {Ti_mlit_min: 'xkcd:cerulean blue',
-                        Ti_mlit_mid: 'xkcd:scarlet',
-                        Ti_mlit_max: 'xkcd:dark green'}
+color_lower_craton = 'xkcd:cerulean blue'
+color_upper_craton = 'xkcd:scarlet'
+color_mantle_lithosphere = 'xkcd:dark green'
+color_lower_crust = 'xkcd:brown'
+color_uupper_crust = 'xkcd:grey'
+color_decolement = 'xkcd:dark grey'
+color_sediments = 'xkcd:light brown'
+
+if(lower_craton_code in particles_layers):
+    cond_lower_craton2plot, Ti_lower_craton_max, Ti_lower_craton_mid, Ti_lower_craton_min = take_three_particles([lower_craton_code], particles_layers, T_initial)
+
+    plot_lower_craton_particles = True
+
+    dict_lower_craton_markers = {Ti_lower_craton_max: '*',
+                                  Ti_lower_craton_mid: '^',
+                                  Ti_lower_craton_min: 'D'}
+
+    dict_lower_craton_colors = {Ti_lower_craton_min: color_lower_craton,
+                                 Ti_lower_craton_mid: color_lower_craton,
+                                 Ti_lower_craton_max: color_lower_craton}
 else:
-    plot_mlit_particles = False
-    cond_mlit2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
+    plot_lower_craton_particles = False
+    cond_lower_craton2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
 
-if(crust_code in particles_layers):
-    cond_crust = particles_layers == crust_code
-    particles_crust = particles_layers[cond_crust]
+if(upper_craton_code in particles_layers):
+    cond_upper_craton2plot, Ti_upper_craton_max, Ti_upper_craton_mid, Ti_upper_craton_min = take_three_particles([upper_craton_code], particles_layers, T_initial)
 
-    T_initial_crust = T_initial[cond_crust] #initial temperature of crustal particles
-    T_initial_crust_sorted = np.sort(T_initial_crust)
+    plot_upper_craton_particles = True
 
-    Ti_crust_max = np.max(T_initial_crust_sorted)
-    mid_index = len(T_initial_crust_sorted)//2
-    Ti_crust_mid = T_initial_crust_sorted[mid_index]
-    Ti_crust_min = np.min(T_initial_crust_sorted)
+    dict_upper_craton_markers = {Ti_upper_craton_max: '*',
+                                  Ti_upper_craton_mid: '^',
+                                  Ti_upper_craton_min: 'D'}
 
-    cond_crust2plot = (T_initial == Ti_crust_min) | (T_initial == Ti_crust_mid) | (T_initial == Ti_crust_max)
-    plot_crust_particles = True
+    dict_upper_craton_colors = {Ti_upper_craton_min: color_upper_craton,
+                                 Ti_upper_craton_mid: color_upper_craton,
+                                 Ti_upper_craton_max: color_upper_craton}
 else:
-    plot_crust_particles = False
-    cond_crust2plot = np.arange(0, n, 1) == np.arange(0,n,1) + 1
+    plot_upper_craton_particles = False
+    cond_upper_craton2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
 
+if(mantle_lithosphere_code in particles_layers):
+    cond_mantle_lithosphere2plot, Ti_mantle_lithosphere_max, Ti_mantle_lithosphere_mid, Ti_mantle_lithosphere_min = take_three_particles([mantle_lithosphere_code], particles_layers, T_initial)
+
+    plot_mantle_lithosphere_particles = True
+    
+    dict_mantle_lithosphere_markers = {Ti_mantle_lithosphere_max: '*',
+                                       Ti_mantle_lithosphere_mid: '^',
+                                       Ti_mantle_lithosphere_min: 'D'}
+    
+    dict_mantle_lithosphere_colors = {Ti_mantle_lithosphere_min: color_mantle_lithosphere,
+                                      Ti_mantle_lithosphere_mid: color_mantle_lithosphere,
+                                      Ti_mantle_lithosphere_max: color_mantle_lithosphere}
+else:
+    plot_mantle_lithosphere_particles = False
+    cond_mantle_lithosphere2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
+    
+if((lower_crust1_code in particles_layers) | (lower_crust2_code in particles_layers)):
+    cond_lower_crust_2plot, Ti_lower_crust_max, Ti_lower_crust_mid, Ti_lower_crust_min = take_three_particles([lower_crust1_code, lower_crust2_code], particles_layers, T_initial)
+
+    plot_lower_crust_particles = True
+
+    dict_lower_crust_markers = {Ti_lower_crust_max: '*',
+                                  Ti_lower_crust_mid: '^',
+                                  Ti_lower_crust_min: 'D'}
+
+    dict_lower_crust_colors = {Ti_lower_crust_min: color_lower_crust,
+                                 Ti_lower_crust_mid: color_lower_crust,
+                                 Ti_lower_crust_max: color_lower_crust}
+else:
+    plot_lower_crust_particles = False
+    cond_lower_crust_2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
+
+if(upper_crust_code in particles_layers):
+    cond_upper_crust2plot, Ti_upper_crust_max, Ti_upper_crust_mid, Ti_upper_crust_min = take_three_particles([upper_crust_code], particles_layers, T_initial)
+
+    plot_upper_crust_particles = True
+
+    dict_upper_crust_markers = {Ti_upper_crust_max: '*',
+                                 Ti_upper_crust_mid: '^',
+                                 Ti_upper_crust_min: 'D'}
+
+    dict_upper_crust_colors = {Ti_upper_crust_min: color_uupper_crust,
+                               Ti_upper_crust_mid: color_uupper_crust,
+                               Ti_upper_crust_max: color_uupper_crust}
+else:
+    plot_upper_crust_particles = False
+    cond_upper_crust2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
+
+if(decolement_code in particles_layers):
+    cond_decolement2plot, Ti_decolement_max, Ti_decolement_mid, Ti_decolement_min = take_three_particles([decolement_code], particles_layers, T_initial)
+
+    plot_decolement_particles = True
+
+    dict_decolement_markers = {Ti_decolement_max: '*',
+                                Ti_decolement_mid: '^',
+                                Ti_decolement_min: 'D'}
+
+    dict_decolement_colors = {Ti_decolement_min: color_decolement,
+                               Ti_decolement_mid: color_decolement,
+                               Ti_decolement_max: color_decolement}
+else:
+    plot_decolement_particles = False
+    cond_decolement2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
+
+if(sediments_code in particles_layers):
+    cond_sediments2plot, Ti_sediments_max, Ti_sediments_mid, Ti_sediments_min = take_three_particles([sediments_code], particles_layers, T_initial)
+
+    plot_sediments_particles = True
+
+    dict_sediments_markers = {Ti_sediments_max: '*',
+                               Ti_sediments_mid: '^',
+                               Ti_sediments_min: 'D'}
+
+    dict_sediments_colors = {Ti_sediments_min: color_sediments,
+                             Ti_sediments_mid: color_sediments,
+                             Ti_sediments_max: color_sediments}
+else:
+    plot_sediments_particles = False
+    cond_sediments2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
 
 ############################################################################################################################
 # Plotting
@@ -240,10 +345,31 @@ zip_files = True
 print("Generating frames...")
 linewidth = 0.85
 markersize = 8
-color_crust='xkcd:grey'
+# color_crust='xkcd:grey'
 
 color_incremental_melt = 'xkcd:bright pink'
 color_depleted_mantle='xkcd:bright purple'
+
+def plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond2plot, dict_markers, dict_colors, markersize=8, linewidth=0.85, h_air=40.0e3):
+    if(cond2plot[particle] == True):
+        axs[0].plot(x_track[i, particle]/1.0e3,
+                    z_track[i, particle]/1.0e3+h_air,
+                    dict_markers[T_initial[particle]],
+                    color=dict_colors[T_initial[particle]],
+                    markersize=markersize-2, zorder=60)
+        
+        axs[1].plot(T[i, particle],
+                    P[i, particle],
+                    dict_markers[T_initial[particle]],
+                    color=dict_colors[T_initial[particle]],
+                    markersize=10)
+        
+        axs[1].plot(T[:i, particle], P[:i, particle], '-', color=dict_colors[T_initial[particle]], linewidth=linewidth, alpha=0.8, zorder=60) #PTt path
+
+        #plotting points at each 5 Myr
+        for j in np.arange(0, current_time, 5):
+            idx = find_nearest(time, j)
+            axs[1].plot(T[idx, particle], P[idx, particle], '.', color='xkcd:black', markersize=2)
 
 with pymp.Parallel() as p:
     for i in p.range(start, end, step):
@@ -272,42 +398,30 @@ with pymp.Parallel() as p:
                         color_incremental_melt = color_incremental_melt,
                         color_depleted_mantle = color_depleted_mantle
                         )
-            
-            for particle, particle_layer, mlit2plot in zip(range(n), particles_layers, cond_mlit2plot):
+
+            for particle, particle_layer in zip(range(n), particles_layers):
                 #Plot particles in prop subplot
+                
+                if((plot_mantle_lithosphere_particles == True) & (particle_layer == mantle_lithosphere_code)): #lithospheric mantle particles
+                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_mantle_lithosphere2plot, dict_mantle_lithosphere_markers, dict_mantle_lithosphere_colors, markersize, linewidth, h_air)
 
-                if(plot_crust_particles == True):
-                    if(particle_layer != mlit_code): #crustal particles
-                        # print(particle_layer)
-                        if(cond_crust2plot[particle] == True):
-                            axs[0].plot(x_track[i, particle]/1.0e3, z_track[i, particle]/1.0e3+h_air, '.', color=color_crust, markersize=markersize-2, zorder=60)
-                            axs[1].plot(T[i, particle], P[i, particle], '.', color=color_crust, markersize=markersize) #current PTt point
-                            axs[1].plot(T[:i, particle], P[:i, particle], '-', color=color_crust, linewidth=linewidth, alpha=1.0, zorder=60) #PTt path
-                            #plotting points at each 5 Myr
-                            for j in np.arange(0, current_time, 5):
-                                idx = find_nearest(time, j)
-                                axs[1].plot(T[idx, particle], P[idx, particle], '.', color='xkcd:black', markersize=2)
+                if((plot_upper_craton_particles == True) & (particle_layer == upper_craton_code)):
+                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_upper_craton2plot, dict_upper_craton_markers, dict_upper_craton_colors, markersize, linewidth, h_air)
 
+                if((plot_lower_craton_particles == True) & (particle_layer == lower_craton_code)):
+                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_lower_craton2plot, dict_lower_craton_markers, dict_lower_craton_colors, markersize, linewidth, h_air)
 
-                if(plot_mlit_particles == True): #lithospheric mantle particles
-                    if(particle_layer == mlit_code):
-                        if(mlit2plot==True):
-                            # print(f"Particle: {particle}, Layer: {particle_layer}, T_initial: {T_initial[particle]}")
-                            axs[0].plot(x_track[i, particle]/1.0e3, z_track[i, particle]/1.0e3+h_air,
-                                        dict_mlit_markers[T_initial[particle]],
-                                        color=dict_mlit_colors[T_initial[particle]],
-                                        markersize=markersize-2, zorder=60)
-                            
-                            axs[1].plot(T[i, particle], P[i, particle],
-                                        dict_mlit_markers[T_initial[particle]],
-                                        color=dict_mlit_colors[T_initial[particle]], markersize=10) #current PTt point
+                if((plot_lower_crust_particles == True) & ((particle_layer == lower_crust1_code) | (particle_layer == lower_crust2_code))):
+                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_lower_crust_2plot, dict_lower_crust_markers, dict_lower_crust_colors, markersize, linewidth, h_air)
 
-                            axs[1].plot(T[:i, particle], P[:i, particle], '-', color=dict_mlit_colors[T_initial[particle]], linewidth=linewidth, alpha=0.8, zorder=60) #PTt path
-                            #plotting points at each 5 Myr
-                            
-                            for j in np.arange(0, current_time, 5):
-                                idx = find_nearest(time, j)
-                                axs[1].plot(T[idx, particle], P[idx, particle], '.', color='xkcd:black', markersize=2)
+                if((plot_upper_crust_particles == True) & (particle_layer == upper_crust_code)):
+                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_upper_crust2plot, dict_upper_crust_markers, dict_upper_crust_colors, markersize, linewidth, h_air)
+
+                if((plot_decolement_particles == True) & (particle_layer == decolement_code)):
+                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_decolement2plot, dict_decolement_markers, dict_decolement_colors, markersize, linewidth, h_air)
+
+                if((plot_sediments_particles == True) & (particle_layer == sediments_code)):
+                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_sediments2plot, dict_sediments_markers, dict_sediments_colors, markersize, linewidth, h_air)
 
             # Setting plot details
             fsize = 14
@@ -316,7 +430,7 @@ with pymp.Parallel() as p:
             axs[0].tick_params(axis='both', labelsize=fsize)
 
             axs[1].set_xlim([0, 1500])
-            ylims = np.array([0, 4000])
+            ylims = np.array([0, 8000])
             axs[1].set_ylim(ylims)
             axs[1].set_xlabel(r'Temperature [$^{\circ}$C]', fontsize=fsize)
             axs[1].set_ylabel('Pressure [MPa]', fontsize=fsize)
@@ -335,6 +449,24 @@ with pymp.Parallel() as p:
             # nticks = len(axs[1].get_yticks())
             # ax1.yaxis.set_major_locator(matplotlib.ticker.LinearLocator(nticks))
             # ax1.yaxis.set_label_position("left")
+
+            #creating legend for particles
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_mantle_lithosphere, markersize=markersize, label='Mantle Lithosphere', zorder=60) if plot_mantle_lithosphere_particles else None
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_upper_craton, markersize=markersize, label='Upper Craton', zorder=60) if plot_upper_craton_particles else None
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_lower_craton, markersize=markersize, label='Lower Craton', zorder=60) if plot_lower_craton_particles else None
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_lower_crust, markersize=markersize, label='Lower Crust', zorder=60) if plot_lower_crust_particles else None
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_uupper_crust, markersize=markersize, label='Upper Crust', zorder=60) if plot_upper_crust_particles else None
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_decolement, markersize=markersize, label='Decollement', zorder=60) if plot_decolement_particles else None
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_sediments, markersize=markersize, label='Sediments', zorder=60) if plot_sediments_particles else None
+
+            axs[1].legend(loc='upper left', ncol=2, fontsize=6, handlelength=0, handletextpad=0, labelcolor='linecolor')
+
+            ax1.plot(-10, -10, '*', color='xkcd:black', markersize=markersize-4, label='Higher Temperature', zorder=60)
+            ax1.plot(-10, -10, '^', color='xkcd:black', markersize=markersize-4, label='Middle Temperature', zorder=60)
+            ax1.plot(-10, -10, 'D', color='xkcd:black', markersize=markersize-4, label='Lower Temperature', zorder=60)
+            ax1.plot(-10, -10, '.', color='xkcd:black', markersize=markersize-4, label='5 Myr time step', zorder=60)
+
+            ax1.legend(loc='center left', ncol=1, fontsize=6)
 
             if(plot_melt):
                 #plotting melt legend
