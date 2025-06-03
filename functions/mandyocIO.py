@@ -1545,7 +1545,7 @@ def plot_property(dataset, prop, xlims, ylims, model_path,
     
     #plot Time in Myr
     # ax.text(0.68, 1.035, ' {:01} Myr'.format(instant), bbox=dict(facecolor='white', edgecolor='white', alpha=0.0), fontsize = 14, zorder=52, transform=ax.transAxes)
-    ax.text(0.78, 1.035, ' {:01} Myr'.format(instant), bbox=dict(facecolor='white', edgecolor='white', alpha=0.0), fontsize = 14, zorder=52, transform=ax.transAxes)
+    ax.text(0.65, 1.035, ' {:01} Myr'.format(instant), bbox=dict(facecolor='white', edgecolor='white', alpha=0.0), fontsize = 14, zorder=52, transform=ax.transAxes)
     
     val_minmax = vals_minmax[prop]
     

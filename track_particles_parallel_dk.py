@@ -108,7 +108,7 @@ search_thickness = 50.0e3
 # search_thickness = 35.0e3
 
 # x_begin and x_end are the limits of the area where we want to track particles
-x_begin = 750.0e3
+x_begin = 400.0e3
 x_end = 1150.0e3
 
 asthenosphere_code = 0
