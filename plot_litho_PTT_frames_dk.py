@@ -69,7 +69,7 @@ properties = [#Properties from mandyoc. Comment/uncomment to select which ones y
             #  'strain',
             #  'strain_rate',
             #  'temperature',
-             'temperature_anomaly',
+            #  'temperature_anomaly',
             #  'surface',
             #  'viscosity'
              ]
@@ -150,6 +150,10 @@ steps = trackdataset.step.values[::-1]
 n = int(trackdataset.ntracked.values)
 nTotal = np.size(x_track)
 steps = nTotal//n
+
+print(f"len of:\n x_track: {len(x_track)}\n z_track: {len(z_track)}\n P: {len(P)}\n T: {len(T)}\n time: {len(time)}\n n_tracked: {n}\n steps: {steps}\n")
+print(f"n_tracked x len(all_time) = {n}*{len(time)} = {n*len(time)}")
+print(f"nTotal: {nTotal}, n: {n}, steps: {steps}")
 
 x_track = np.reshape(x_track,(steps,n))
 z_track = np.reshape(z_track,(steps,n))

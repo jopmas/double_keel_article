@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import os
+import gc
 import xarray as xr
 import subprocess
 import multiprocessing #needed to run pymp in mac
@@ -104,12 +105,17 @@ for rank in range(ncores):
 
 h_air = 40.0e3
 
-search_thickness = 50.0e3
-# search_thickness = 35.0e3
+# search_thickness = 10.0e3
+# search_thickness = 30.0e3
+search_thickness = 35.0e3
+# search_thickness = 40.0e3
+# search_thickness = 50.0e3
 
 # x_begin and x_end are the limits of the area where we want to track particles
-x_begin = 400.0e3
-x_end = 1150.0e3
+# x_begin = 400.0e3
+x_begin = 750.0e3
+x_end = 1100.0e3
+# x_end = 1150.0e3
 
 asthenosphere_code = 0
 lower_craton_code = 1
@@ -143,7 +149,8 @@ temperature = []
 
 #Reading backwards in time the P and T data
 start = int(Tdataset.time.values[0])
-end = int(Tdataset.time[:idx+1].size) if take_specific_time else int(Tdataset.time.size - 1)
+# end = int(Tdataset.time[:idx+1].size) if take_specific_time else int(Tdataset.time.size - 1) #DANDO PAU
+end = int(Tdataset.time[:idx].size) if take_specific_time else int(Tdataset.time.size - 1)
 
 print(f'Start idx: {start}, End idx: {end}, time of end: {Tdataset.time.values[end]}')
 step = 1
@@ -161,12 +168,21 @@ vecz_track_evolution = pymp.shared.dict()
 present_pressure_evolution = pymp.shared.dict()
 present_temperature_evolution = pymp.shared.dict()
 
+all_time = pymp.shared.list()
+all_step = pymp.shared.list()
+
 with pymp.Parallel() as p:
     for i in p.range(end, start-step, -step):
+    # for i in p.range(start, end, step)[::-1]:  # Reverse the range to process from end to start
+        print(f"Processing step: {Tdataset.step.values[i]}")
     # for i in p.range(end, start, -step):
         # print(f"Step: {Tdataset.step.values[i]}")
         temperature = Tdataset.temperature[i].values.T
         pressure = Pdataset.pressure[i].values.T
+        time_current = Tdataset.time.values[i]
+        step_current = Tdataset.step.values[i]
+        all_time.append(time_current)
+        all_step.append(step_current)
 
         x=[]
         z=[]
@@ -238,7 +254,15 @@ with pymp.Parallel() as p:
         present_temperature_evolution[i] = present_temperature
         
         np.savetxt(f"track_xzPT_step_{str(Tdataset.step.values[i]).zfill(6)}.txt", np.c_[vecx_track, vecz_track, present_pressure/1.0E6, present_temperature], fmt="%.5f")
-
+        del x
+        del z
+        del id_vec
+        del layer_vec
+        del vecx_track
+        del vecz_track
+        del present_temperature
+        del present_pressure
+        gc.collect()
 
 vecx_track_dict = dict(vecx_track_evolution)
 vecz_track_dict = dict(vecz_track_evolution)
@@ -250,11 +274,16 @@ all_vecz_track = []
 all_present_pressure = []
 all_present_temperature = []
 
+all_step = sorted(all_step)
+all_time = sorted(all_time)
+
 for i,j,k,l in zip(sorted(vecx_track_dict), sorted(vecz_track_dict), sorted(present_pressure_dict), sorted(present_temperature_dict)):
     all_vecx_track.extend(vecx_track_dict[i])
     all_vecz_track.extend(vecz_track_dict[j])
     all_present_pressure.extend(present_pressure_dict[k])
     all_present_temperature.extend(present_temperature_dict[l])
+
+print(f"len of:\n all_vecx_track {len(all_vecx_track)}\n all_vecz_track {len(all_vecz_track)}\n all_present_pressure {len(all_present_pressure)}\n all_present_temperature {len(all_present_temperature)}\n all_time {len(all_time)}\n all_step {len(all_step)}")
 
 # Creatiing the xarray dataset with the tracked particles
 ds = xr.Dataset(
@@ -263,8 +292,10 @@ ds = xr.Dataset(
         "ztrack": (["index"], all_vecz_track[::-1]),
         "ptrack": (["index"], all_present_pressure[::-1]),
         "ttrack": (["index"], all_present_temperature[::-1]),
-        "step": Tdataset.step[:end].values[::-1],
-        "time": Tdataset.time[:end].values[::-1],
+        # "step": Tdataset.step[:end].values[::-1],
+        # "time": Tdataset.time[:end].values[::-1],
+        "step": all_step,
+        "time": all_time,
         "ntracked": int(n_tracked),
         "particles_layers": layers_selec[::-1]
     },
@@ -275,6 +306,7 @@ ds = xr.Dataset(
 
 ds.to_netcdf("_track_xzPT_all_steps.nc")
 
+print(f"n_tracked x len(all_time) = {n_tracked}*{len(all_time)} = {n_tracked*len(all_time)}")
 
 # Compressing the files 
 print("Zipping files")
