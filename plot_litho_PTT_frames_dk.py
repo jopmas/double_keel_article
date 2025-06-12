@@ -147,6 +147,14 @@ P = trackdataset.ptrack.values[::-1]
 T = trackdataset.ttrack.values[::-1]
 time = trackdataset.time.values[::-1]
 steps = trackdataset.step.values[::-1]
+
+# x_track = trackdataset.xtrack.values
+# z_track = trackdataset.ztrack.values
+# P = trackdataset.ptrack.values
+# T = trackdataset.ttrack.values
+# time = trackdataset.time.values
+# steps = trackdataset.step.values
+
 n = int(trackdataset.ntracked.values)
 nTotal = np.size(x_track)
 steps = nTotal//n
@@ -166,17 +174,33 @@ T = np.reshape(T,(steps,n))
 
 particles_layers = trackdataset.particles_layers.values[::-1] #code of the tracked layers
 
-asthenosphere_code = 0
-lower_craton_code = 1
-upper_craton_code = 2
-mantle_lithosphere_code = 3
-lower_crust1_code = 4
-seed_code = 5
-lower_crust2_code = 6
-upper_crust_code = 7
-decolement_code = 8
-sediments_code = 9
-air_code = 10
+double_keel = True
+# double_keel = False
+print(f"double_keel model") if(double_keel) else print("homogeneous model")
+
+if(double_keel):
+    asthenosphere_code = 0
+    lower_craton_code = 1
+    upper_craton_code = 2
+    mantle_lithosphere_code = 3
+    lower_crust1_code = 4
+    seed_code = 5
+    lower_crust2_code = 6
+    upper_crust_code = 7
+    decolement_code = 8
+    sediments_code = 9
+    air_code = 10
+
+else:
+    asthenosphere_code = 0
+    mantle_lithosphere_code = 1
+    lower_crust1_code = 2
+    seed_code = 3
+    lower_crust2_code = 4
+    upper_crust_code = 5
+    decolement_code = 6
+    sediments_code = 7
+    air_code = 8
 
 T_initial = T[0]
 
@@ -208,37 +232,38 @@ color_uupper_crust = 'xkcd:grey'
 color_decolement = 'xkcd:dark grey'
 color_sediments = 'xkcd:light brown'
 
-if(lower_craton_code in particles_layers):
-    cond_lower_craton2plot, Ti_lower_craton_max, Ti_lower_craton_mid, Ti_lower_craton_min = take_three_particles([lower_craton_code], particles_layers, T_initial)
+if(double_keel==True):
+    if(lower_craton_code in particles_layers):
+        cond_lower_craton2plot, Ti_lower_craton_max, Ti_lower_craton_mid, Ti_lower_craton_min = take_three_particles([lower_craton_code], particles_layers, T_initial)
 
-    plot_lower_craton_particles = True
+        plot_lower_craton_particles = True
 
-    dict_lower_craton_markers = {Ti_lower_craton_max: '*',
-                                  Ti_lower_craton_mid: '^',
-                                  Ti_lower_craton_min: 'D'}
+        dict_lower_craton_markers = {Ti_lower_craton_max: '*',
+                                    Ti_lower_craton_mid: '^',
+                                    Ti_lower_craton_min: 'D'}
 
-    dict_lower_craton_colors = {Ti_lower_craton_max: color_lower_craton,
-                                 Ti_lower_craton_mid: color_lower_craton,
-                                 Ti_lower_craton_min: color_lower_craton}
-else:
-    plot_lower_craton_particles = False
-    cond_lower_craton2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
+        dict_lower_craton_colors = {Ti_lower_craton_max: color_lower_craton,
+                                    Ti_lower_craton_mid: color_lower_craton,
+                                    Ti_lower_craton_min: color_lower_craton}
+    else:
+        plot_lower_craton_particles = False
+        cond_lower_craton2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
 
-if(upper_craton_code in particles_layers):
-    cond_upper_craton2plot, Ti_upper_craton_max, Ti_upper_craton_mid, Ti_upper_craton_min = take_three_particles([upper_craton_code], particles_layers, T_initial)
+    if(upper_craton_code in particles_layers):
+        cond_upper_craton2plot, Ti_upper_craton_max, Ti_upper_craton_mid, Ti_upper_craton_min = take_three_particles([upper_craton_code], particles_layers, T_initial)
 
-    plot_upper_craton_particles = True
+        plot_upper_craton_particles = True
 
-    dict_upper_craton_markers = {Ti_upper_craton_max: '*',
-                                  Ti_upper_craton_mid: '^',
-                                  Ti_upper_craton_min: 'D'}
+        dict_upper_craton_markers = {Ti_upper_craton_max: '*',
+                                    Ti_upper_craton_mid: '^',
+                                    Ti_upper_craton_min: 'D'}
 
-    dict_upper_craton_colors = {Ti_upper_craton_max: color_upper_craton,
-                                 Ti_upper_craton_mid: color_upper_craton,
-                                 Ti_upper_craton_min: color_upper_craton}
-else:
-    plot_upper_craton_particles = False
-    cond_upper_craton2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
+        dict_upper_craton_colors = {Ti_upper_craton_max: color_upper_craton,
+                                    Ti_upper_craton_mid: color_upper_craton,
+                                    Ti_upper_craton_min: color_upper_craton}
+    else:
+        plot_upper_craton_particles = False
+        cond_upper_craton2plot = np.arange(0, n, 1) == np.arange(0, n, 1) + 1
 
 if(mantle_lithosphere_code in particles_layers):
     cond_mantle_lithosphere2plot, Ti_mantle_lithosphere_max, Ti_mantle_lithosphere_mid, Ti_mantle_lithosphere_min = take_three_particles([mantle_lithosphere_code], particles_layers, T_initial)
@@ -354,7 +379,7 @@ markersize = 8
 color_incremental_melt = 'xkcd:bright pink'
 color_depleted_mantle='xkcd:bright purple'
 
-def plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond2plot, dict_markers, dict_colors, markersize=8, linewidth=0.85, h_air=40.0e3, plot_only_Tmax=False):
+def plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond2plot, dict_markers, dict_colors, markersize=8, linewidth=0.85, h_air=40.0e3, plot_only_Tmax=False):
     if(plot_only_Tmax==True): #to plot only the particles with the hiher temperature
         if((cond2plot[particle] == True) and (T_initial[particle] == list(dict_markers.keys())[0])): #check if the particle is the one with the highest temperature comparing with the dict_markers keys
             axs[0].plot(x_track[i, particle]/1.0e3,
@@ -404,10 +429,11 @@ with pymp.Parallel() as p:
     for i in p.range(start, end, step):
         
         data = dataset.isel(time=i)
+        current_time = float(data.time.values)
+        # print(f"Plotting frame {i} of {end} at time {current_time} Myr...")
         for prop in properties:
             fig, axs = plt.subplots(1, 2, figsize=(12, 3), constrained_layout=True, gridspec_kw={'width_ratios': [1, 0.4]})
             
-            current_time = float(data.time.values)
             xlims = [0, float(data.lx) / 1.0e3]
             ylims = [-float(data.lz) / 1.0e3 + 40, 40]
             # ylims = [-150, 40]
@@ -432,25 +458,26 @@ with pymp.Parallel() as p:
                 #Plot particles in prop subplot
                 
                 if((plot_mantle_lithosphere_particles == True) & (particle_layer == mantle_lithosphere_code)): #lithospheric mantle particles
-                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_mantle_lithosphere2plot, dict_mantle_lithosphere_markers, dict_mantle_lithosphere_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
+                    plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond_mantle_lithosphere2plot, dict_mantle_lithosphere_markers, dict_mantle_lithosphere_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
 
-                if((plot_upper_craton_particles == True) & (particle_layer == upper_craton_code)):
-                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_upper_craton2plot, dict_upper_craton_markers, dict_upper_craton_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
+                if(double_keel==True):
+                    if((plot_upper_craton_particles == True) & (particle_layer == upper_craton_code)):
+                        plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond_upper_craton2plot, dict_upper_craton_markers, dict_upper_craton_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
 
-                if((plot_lower_craton_particles == True) & (particle_layer == lower_craton_code)):
-                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_lower_craton2plot, dict_lower_craton_markers, dict_lower_craton_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
+                    if((plot_lower_craton_particles == True) & (particle_layer == lower_craton_code)):
+                        plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond_lower_craton2plot, dict_lower_craton_markers, dict_lower_craton_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
 
                 if((plot_lower_crust_particles == True) & ((particle_layer == lower_crust1_code) | (particle_layer == lower_crust2_code))):
-                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_lower_crust_2plot, dict_lower_crust_markers, dict_lower_crust_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
+                    plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond_lower_crust_2plot, dict_lower_crust_markers, dict_lower_crust_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
 
                 if((plot_upper_crust_particles == True) & (particle_layer == upper_crust_code)):
-                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_upper_crust2plot, dict_upper_crust_markers, dict_upper_crust_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
+                    plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond_upper_crust2plot, dict_upper_crust_markers, dict_upper_crust_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
 
                 if((plot_decolement_particles == True) & (particle_layer == decolement_code)):
-                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_decolement2plot, dict_decolement_markers, dict_decolement_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
+                    plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond_decolement2plot, dict_decolement_markers, dict_decolement_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
 
                 if((plot_sediments_particles == True) & (particle_layer == sediments_code)):
-                    plot_particles_of_a_layer(axs, i, x_track, z_track, T_initial, particle, cond_sediments2plot, dict_sediments_markers, dict_sediments_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
+                    plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond_sediments2plot, dict_sediments_markers, dict_sediments_colors, markersize, linewidth, h_air, plot_only_Tmax=plot_only_Tmax)
 
             # Setting plot details
             fsize = 14
@@ -481,8 +508,9 @@ with pymp.Parallel() as p:
 
             #creating legend for particles
             axs[1].plot([-10,-10], [-10,-10], '-', color=color_mantle_lithosphere, markersize=markersize, label='Mantle Lithosphere', zorder=60) if plot_mantle_lithosphere_particles else None
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_upper_craton, markersize=markersize, label='Upper Craton', zorder=60) if plot_upper_craton_particles else None
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_lower_craton, markersize=markersize, label='Lower Craton', zorder=60) if plot_lower_craton_particles else None
+            if(double_keel==True):
+                axs[1].plot([-10,-10], [-10,-10], '-', color=color_upper_craton, markersize=markersize, label='Upper Craton', zorder=60) if plot_upper_craton_particles else None
+                axs[1].plot([-10,-10], [-10,-10], '-', color=color_lower_craton, markersize=markersize, label='Lower Craton', zorder=60) if plot_lower_craton_particles else None
             axs[1].plot([-10,-10], [-10,-10], '-', color=color_lower_crust, markersize=markersize, label='Lower Crust', zorder=60) if plot_lower_crust_particles else None
             axs[1].plot([-10,-10], [-10,-10], '-', color=color_uupper_crust, markersize=markersize, label='Upper Crust', zorder=60) if plot_upper_crust_particles else None
             axs[1].plot([-10,-10], [-10,-10], '-', color=color_decolement, markersize=markersize, label='Decollement', zorder=60) if plot_decolement_particles else None
