@@ -1442,6 +1442,7 @@ def plot_property(dataset, prop, xlims, ylims, model_path,
                 fig,
                 ax,
                 plot_isotherms=True, isotherms=[400, 600, 800, 1000, 1300],
+                isotherms_linewidth=0.5,
                 plot_particles=False,
                 particle_size=0.2,
                 particle_marker="o",
@@ -1555,9 +1556,9 @@ def plot_property(dataset, prop, xlims, ylims, model_path,
         isot_colors = []
         for isotherm in isotherms:
             isot_colors.append('red')
-            
-        cs = ax.contour(xx, zz, Temperi, 100, levels=isotherms, colors=isot_colors)
-        
+
+        cs = ax.contour(xx, zz, Temperi, 100, levels=isotherms, colors=isot_colors, linewidths=isotherms_linewidth)
+
         # if(instant == instants[0]):
         #     fmt = {}
         #     for level, isot in zip(cs.levels, isotherms):

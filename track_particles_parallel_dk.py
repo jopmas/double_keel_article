@@ -113,8 +113,11 @@ search_thickness = 50.0e3
 
 # x_begin = 0.0e3
 # x_end = Lx
-x_begin = 700.0e3
-x_end = 1400.0e3
+# x_begin = 700.0e3
+# x_end = 1400.0e3
+
+x_begin = 600.0e3
+x_end = 800.0e3
 
 #claudio
 # x_begin = 750.0e3

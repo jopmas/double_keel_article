@@ -189,9 +189,9 @@ thickness_upper_crust = 21 * 1.0e3
 # thickness of lower crust (m)
 thickness_lower_crust = 10 * 1.0e3
 #Thickness of non cratonic lithosphere
-thickness_mlit = 90 * 1.0e3
+thickness_mlit = 80 * 1.0e3
 #thickness of cratonic lihosphere (upper)
-thickness_mlit_crat_up = 90 * 1.0e3
+thickness_mlit_crat_up = 80 * 1.0e3
 #thickness of cratonic lithosphere (bottom)
 thickness_mlit_crat_bot = 125 * 1.0e3
 
@@ -314,7 +314,7 @@ H_dec = 1.25e-6 / 2700.0
 H_upper_crust = 1.25e-6 / 2700.0 #9.259E-10
 H_lower_crust = 0.2e-6 / 2800.0 #2.85E-10
 H_seed = 0.2e-6 / 2800.0
-H_mlit = 9.0e-12
+H_mlit = 9.0e-12               
 H_mlit_uc = 9.0e-12
 H_mlit_lc = 9.0e-12
 H_ast = 0.0 #Turccote book: 7.38e-12 #Default is 0.0
@@ -587,10 +587,10 @@ if(preset == False):
 
     ccapacity = 1250*1.0 #937.5=75% #J/kg/K? #DEFAULT
     
-    TP = 1262 #mantle potential temperature
+    # TP = 1262 #mantle potential temperature
     # TP = 1350
     # TP = 1400
-    # TP = 1450
+    TP = 1450
 
     Ta = (TP / np.exp(-10 * 3.28e-5 * (z - thickness_sa) / ccapacity)) + DeltaT
     # Ta = 1262 / np.exp(-10 * 3.28e-5 * (z - thickness_sa) / ccapacity)steady s

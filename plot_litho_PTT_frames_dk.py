@@ -379,9 +379,50 @@ markersize = 8
 color_incremental_melt = 'xkcd:bright pink'
 color_depleted_mantle='xkcd:bright purple'
 
-def plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond2plot, dict_markers, dict_colors, markersize=8, linewidth=0.85, h_air=40.0e3, plot_only_Tmax=False):
+def plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_initial, particle, cond2plot, dict_markers, dict_colors, markersize=8, linewidth=0.85, h_air=40.0e3, plot_only_Tmax=False, plot_only_Tmid=False, plot_only_Tmin=False):
     if(plot_only_Tmax==True): #to plot only the particles with the hiher temperature
         if((cond2plot[particle] == True) and (T_initial[particle] == list(dict_markers.keys())[0])): #check if the particle is the one with the highest temperature comparing with the dict_markers keys
+            axs[0].plot(x_track[i, particle]/1.0e3,
+                        z_track[i, particle]/1.0e3+h_air,
+                        dict_markers[T_initial[particle]],
+                        color=dict_colors[T_initial[particle]],
+                        markersize=markersize-2, zorder=60)
+            
+            axs[1].plot(T[i, particle],
+                        P[i, particle],
+                        dict_markers[T_initial[particle]],
+                        color=dict_colors[T_initial[particle]],
+                        markersize=10)
+            
+            axs[1].plot(T[:i, particle], P[:i, particle], '-', color=dict_colors[T_initial[particle]], linewidth=linewidth, alpha=0.8, zorder=60) #PTt path
+
+            #plotting points at each 5 Myr
+            for j in np.arange(0, current_time, 5):
+                idx = find_nearest(time, j)
+                axs[1].plot(T[idx, particle], P[idx, particle], '.', color='xkcd:black', markersize=2)
+
+    elif(plot_only_Tmid==True): #to plot only the particles with the middle temperature
+        if((cond2plot[particle] == True) and (T_initial[particle] == list(dict_markers.keys())[1])): #middle temperature
+            axs[0].plot(x_track[i, particle]/1.0e3,
+                        z_track[i, particle]/1.0e3+h_air,
+                        dict_markers[T_initial[particle]],
+                        color=dict_colors[T_initial[particle]],
+                        markersize=markersize-2, zorder=60)
+            
+            axs[1].plot(T[i, particle],
+                        P[i, particle],
+                        dict_markers[T_initial[particle]],
+                        color=dict_colors[T_initial[particle]],
+                        markersize=10)
+            
+            axs[1].plot(T[:i, particle], P[:i, particle], '-', color=dict_colors[T_initial[particle]], linewidth=linewidth, alpha=0.8, zorder=60) #PTt path
+
+            #plotting points at each 5 Myr
+            for j in np.arange(0, current_time, 5):
+                idx = find_nearest(time, j)
+                axs[1].plot(T[idx, particle], P[idx, particle], '.', color='xkcd:black', markersize=2)
+    elif(plot_only_Tmin==True): #to plot only the particles with the minimum temperature
+        if((cond2plot[particle] == True) and (T_initial[particle] == list(dict_markers.keys())[2])): #minimum temperature
             axs[0].plot(x_track[i, particle]/1.0e3,
                         z_track[i, particle]/1.0e3+h_air,
                         dict_markers[T_initial[particle]],
@@ -421,9 +462,25 @@ def plot_particles_of_a_layer(axs, i, current_time, time, x_track, z_track, T_in
                 idx = find_nearest(time, j)
                 axs[1].plot(T[idx, particle], P[idx, particle], '.', color='xkcd:black', markersize=2)
 
-plot_only_Tmax = True
-# plot_only_Tmax = False
-print(f"Plotting only Tmax: {plot_only_Tmax}")
+# plot_only_Tmax = True
+plot_only_Tmax = False
+
+# plot_only_Tmid = True
+plot_only_Tmid = False
+
+# plot_only_Tmin = True
+plot_only_Tmin = False
+
+plot_only = 'max'
+
+if(plot_only_Tmax):
+    print(f"Plotting only Tmax: {plot_only_Tmax}")
+elif(plot_only_Tmid):
+    print(f"Plotting only Tmid: {plot_only_Tmid}")
+elif(plot_only_Tmin):
+    print(f"Plotting only Tmin: {plot_only_Tmin}")
+else:
+    print(f"Plotting three particles")
 
 with pymp.Parallel() as p:
     for i in p.range(start, end, step):
