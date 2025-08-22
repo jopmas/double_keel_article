@@ -165,7 +165,7 @@ print(f"nTotal: {nTotal}, n: {n}, steps: {steps}")
 
 x_track = np.reshape(x_track,(steps,n))
 z_track = np.reshape(z_track,(steps,n))
-P = np.reshape(P,(steps,n))
+P = np.reshape(P,(steps,n))/1.0e3 #GPa
 T = np.reshape(T,(steps,n))
 T_maxs = np.max(T, axis=0) #get the maximum temperature for each particle to categorize by temperature
 
@@ -363,10 +363,10 @@ def plot_PT_fields(ax, vertices, x_text, y_text, label, color, fsize_text=6, lin
 # Polygon coordenates of ultra high temperature #
 #################################################
 vertices_UHT = np.array([
-    [900, 0],
-    [1100, 0],
-    [1100, 1400],
-    [900, 1150]
+    [900, 0/1.0e3],
+    [1100, 0/1.0e3],
+    [1100, 1400/1.0e3],
+    [900, 1150/1.0e3]
 ])
 color_UHT = 'xkcd:red'
 label_UHT = 'UHT\nfield'
@@ -379,11 +379,11 @@ fsize_UHT = 6
 # Polygon coordenates of high pressure granulites #
 ###################################################
 vertices_granulite_HP = np.array([
-    [674, 860],
-    [1100, 1400],
-    [1100, 2400],
-    [1000, 2300],
-    [615,1360]
+    [674, 860/1.0e3],
+    [1100, 1400/1.0e3],
+    [1100, 2400/1.0e3],
+    [1000, 2300/1.0e3],
+    [615,1360/1.0e3]
 ])
 color_granulite_HP = 'xkcd:brown'
 label_granulite_HP = 'HP\ngranulites'
@@ -396,15 +396,15 @@ fsize_granulite_HP = 6
 # Polygon coordenates of eclogite #
 ###################################
 vertices_eclogite = np.array([
-    [575, 1265],
-    [1000, 2300],
-    [1100, 2400],
-    [1100, 4500],
-    [600,4500],
-    [347,2300],
-    [468,2159],
-    [488,2083],
-    [531,1360]
+    [575, 1265/1.0e3],
+    [1000, 2300/1.0e3],
+    [1100, 2400/1.0e3],
+    [1100, 4500/1.0e3],
+    [600,4500/1.0e3],
+    [347,2300/1.0e3],
+    [468,2159/1.0e3],
+    [488,2083/1.0e3],
+    [531,1360/1.0e3]
 ])
 color_eclogite = 'xkcd:blue'
 label_eclogite = 'Eclogite\nfacies'
@@ -417,13 +417,13 @@ fsize_eclogite = 6
 # Polygon coordenates of granulites #
 #####################################
 vertices_granulite = np.array([
-    [800, 0],
-    [900, 0],
-    [900, 1180],
-    [670, 860],
-    [684, 589],
-    [710, 318],
-    [748, 118]
+    [800, 0/1.0e3],
+    [900, 0/1.0e3],
+    [900, 1180/1.0e3],
+    [670, 860/1.0e3],
+    [684, 589/1.0e3],
+    [710, 318/1.0e3],
+    [748, 118/1.0e3]
 ])
 color_granulite = 'xkcd:pink'
 label_granulite = 'Granulites'
@@ -434,15 +434,15 @@ fsize_granulite = 6
 
 # Polygon coordenates of granulites facies anfibolite
 vertices_anfibolite = np.array([
-    [420, 0],
-    [790, 0],
-    [748, 118],
-    [710, 318],
-    [674,861],
-    [615, 1360],
-    [576, 1268],
-    [531, 1360],
-    [410, 859]
+    [420, 0/1.0e3],
+    [790, 0/1.0e3],
+    [748, 118/1.0e3],
+    [710, 318/1.0e3],
+    [674,861/1.0e3],
+    [615, 1360/1.0e3],
+    [576, 1268/1.0e3],
+    [531, 1360/1.0e3],
+    [410, 859/1.0e3]
 ])
 color_anfibolite = 'xkcd:green'
 label_anfibolite = 'Anfibolite\nfacies'
@@ -453,13 +453,13 @@ fsize_anfibolite = 6
 
 # Polygon coordenates of blueschist
 vertices_blueschist = np.array([
-    [100, 344],
-    [408, 859],
-    [531, 1360],
-    [488, 2080],
-    [468, 2160],
-    [348, 2318],
-    [100, 668]
+    [100, 344/1.0e3],
+    [408, 859/1.0e3],
+    [531, 1360/1.0e3],
+    [488, 2080/1.0e3],
+    [468, 2160/1.0e3],
+    [348, 2318/1.0e3],
+    [100, 668/1.0e3]
 ])
 color_blueschist = 'xkcd:blue'
 label_blueschist = 'Blueschist\nfacies'
@@ -470,10 +470,10 @@ fsize_blueschist = 6
 
 # Polygon coordenates of greenschiest
 vertices_greenschiest = np.array([
-    [331, 0],
-    [420, 0],
-    [408, 859],
-    [349, 778]
+    [331, 0/1.0e3],
+    [420, 0/1.0e3],
+    [408, 859/1.0e3],
+    [349, 778/1.0e3]
 ])
 color_greenschiest = 'xkcd:green'
 label_greenschiest = 'Greenschist\nfacies'
@@ -484,10 +484,10 @@ fsize_greenschiest = 4
 
 # Polygon coordenates of sub-greenschiest
 vertices_sub_greenschiest = np.array([
-    [100, 0],
-    [331, 0],
-    [349, 778],
-    [100, 344]
+    [100, 0/1.0e3],
+    [331, 0/1.0e3],
+    [349, 778/1.0e3],
+    [100, 344/1.0e3]
 ])
 color_sub_greenschiest = 'xkcd:green'
 label_sub_greenschiest = 'Sub-Greenschist\nfacies'
@@ -606,10 +606,10 @@ with pymp.Parallel() as p:
             axs[0].tick_params(axis='both', labelsize=fsize)
 
             axs[1].set_xlim([100, 1100])
-            ylims = np.array([0, 4500])
+            ylims = np.array([0, 4500])/1.0e3 #GPa
             axs[1].set_ylim(ylims)
             axs[1].set_xlabel(r'Temperature [$^{\circ}$C]', fontsize=fsize)
-            axs[1].set_ylabel('Pressure [MPa]', fontsize=fsize)
+            axs[1].set_ylabel('Pressure [GPa]', fontsize=fsize)
             # axs[1].yaxis.set_label_position("right")
             # axs[1].tick_params(axis='y', labelright=True, labelleft=False, labelsize=fsize)
             
@@ -618,7 +618,7 @@ with pymp.Parallel() as p:
 
             #creating depth axis to PTt plot
             ax1 = axs[1].twinx()
-            ax1.set_ylim(ylims/30)
+            ax1.set_ylim(ylims*1000/30)
             # ax1.tick_params(axis='y', labelright=False, labelleft=True, labelsize=fsize)
             ax1.set_ylabel('Depth [km]', fontsize=fsize)
             ax1.tick_params(axis='y', labelsize=fsize-2)

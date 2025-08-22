@@ -43,5 +43,5 @@ ds_data = read_mandyoc_output(
         parameters_file="param.txt"
     )
 
-dataset = read_datasets(model_path, datasets, save_big_dataset = True)
+dataset = read_datasets(model_path, datasets, save_big_dataset = False)
 
