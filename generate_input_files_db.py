@@ -6,6 +6,7 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import interp2d
 from matplotlib.pyplot import cycler
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
+from cmcrameri import cm as cr
 
 import xarray as xr
 
@@ -141,8 +142,6 @@ if(crameri_colors):
             colors = cmap(np.linspace(0,1,N))
             return cycler("color",colors)
 
-    from cmcrameri import cm as cr
-
     n_colors = 10
     # plt.rcParams["axes.prop_cycle"] = get_cycle(cr.romaO, n_colors)
     # plt.rcParams["axes.prop_cycle"] = get_cycle(cr.oslo, n_colors)
@@ -164,7 +163,7 @@ experiemnts = {
                }
 
 # ncores = 20
-ncores = 12
+ncores = 128
 
 ###############################################################################################################################################
 # Domain and interfaces
@@ -224,7 +223,7 @@ interfaces = {
 dx = Lx/(Nx-1)
 L_nc = 800.0e3 #m
 N_nc = int(L_nc//dx)
-n_retreat = 100 #points in x direction to retreat the left protion of cratonic lithosphere
+n_retreat = 0 #points in x direction to retreat the left protion of cratonic lithosphere
 L_retreat = n_retreat * dx #length of retreat
 
 thickening = thickness_mlit #m
@@ -392,8 +391,8 @@ with open("interfaces.txt", "w") as f:
 # Creating parameter file
 ##############################################################################
 
-high_kappa_in_asthenosphere = True
-# high_kappa_in_asthenosphere = False #default
+# high_kappa_in_asthenosphere = True
+high_kappa_in_asthenosphere = False #default
 
 #Convergence criteria
 denok                            = 1.0e-14
@@ -403,17 +402,32 @@ particles_per_element            = 40
 sp_surface_tracking              = True
 sp_surface_processes             = False
 
-#time constrains 
-time_max                         = 210.0e6
-dt_max                           = 10.0e3 #default
-step_print                       = 25
 
 #External inputs: bc velocity, velocity field, precipitation and
 #climate change
-variable_bcv                     = True
 
-velocity_from_ascii              = True
-# velocity_from_ascii              = False
+# velocity_from_ascii              = True
+velocity_from_ascii              = False
+if(velocity_from_ascii == True):
+    variable_bcv                     = True
+else:
+    variable_bcv                     = False
+
+#time constrains 
+if(variable_bcv == True):
+    ti_convergence = 25.0
+    ti_quiescence = 75.0
+    dt_quiescence = 300
+    tf_quiescence = ti_quiescence + dt_quiescence
+    dt_rifting2 = 60.0
+
+    time_max = (tf_quiescence + dt_rifting2)*1.0e6 #210.0e6
+else:
+    time_max = 435.0e6
+
+dt_max                           = 10.0e3 #default
+step_print                       = 25
+
 
 
 if(sp_surface_processes == True):
@@ -426,7 +440,7 @@ else:
 #step files
 print_step_files                 = True
 
-checkered = True
+checkered = False
 #velocity bc
 top_normal_velocity                 = 'fixed'         # ok
 top_tangential_velocity             = 'free '         # ok
@@ -592,17 +606,15 @@ if(preset == False):
     # TP = 1400
     TP = 1450
 
-    Ta = (TP / np.exp(-10 * 3.28e-5 * (z - thickness_sa) / ccapacity)) + DeltaT
-    # Ta = 1262 / np.exp(-10 * 3.28e-5 * (z - thickness_sa) / ccapacity)steady s
+    Ta = (TP / np.exp(-10 * 3.28e-5 * (z - thickness_sa) / ccapacity)) + DeltaT #Temperature profile for asthenosphere
 
-    T[T < 0.0] = 0.0
-    cond1 = Ta<T #VICTOR
-    T[T > Ta] = Ta[T > Ta] #apply the temperature of asthenosphere Ta where temperature T is greater than Ta, 
+    T[T < 0.0] = 0.0 #forcing negative temperatures to 0
+    cond1 = Ta<T #VICTOR - selecting where asthenosphere temperature is lower than lithospheric temperature
+    T[T > Ta] = Ta[T > Ta] #apply the temperature of asthenosphere (Ta) where temperature (T) is greater than Ta
 
-    T_cratonic[T_cratonic < 0.0] = 0.0
+    T_cratonic[T_cratonic < 0.0] = 0.0 #forcing negative temperatures to 0
     cond1_cratonic = Ta<T_cratonic #VICTOR
-    T_cratonic[T_cratonic > Ta] = Ta[T_cratonic > Ta] #apply the temperature of asthenosphere Ta where temperature T is greater than Ta, 
-
+    T_cratonic[T_cratonic > Ta] = Ta[T_cratonic > Ta] #apply the temperature of asthenosphere Ta where temperature T is greater than Ta
 
     # kappa = 0.75*1.0e-6 #thermal diffusivity
     kappa = 1.0e-6 #thermal diffusivity
@@ -617,8 +629,10 @@ if(preset == False):
     )  # lower crust
     H[cond] = H_lower_crust
 
+    #Conductive model
     Taux = np.copy(T)
     Taux_cratonic = np.copy(T_cratonic)
+
     t = 0
     dt = 5000
     dt_sec = dt * 365 * 24 * 3600
@@ -626,29 +640,32 @@ if(preset == False):
     cond = cond1 | (T == 0)  # (T > 1300) | (T == 0) #VICTOR
     cond_cratonic = cond1_cratonic | (T_cratonic == 0)
     dz = Lz / (Nz - 1)
-
     
     while t < 500.0e6:
+        #non-cratonic region
         T[1:-1] += (
             kappa * dt_sec * ((T[2:] + T[:-2] - 2 * T[1:-1]) / dz ** 2)
             + H[1:-1] * dt_sec / ccapacity
         )
         T[cond] = Taux[cond]
 
+        #cratonic region
         T_cratonic[1:-1] += (
             kappa * dt_sec * ((T_cratonic[2:] + T_cratonic[:-2] - 2 * T_cratonic[1:-1]) / dz ** 2)
             + H[1:-1] * dt_sec / ccapacity
         )
-        T_cratonic[cond] = Taux_cratonic[cond]
+        T_cratonic[cond_cratonic] = Taux_cratonic[cond_cratonic]
 
         t = t + dt
-    
+
     T = np.ones_like(X) * T[:, None] #(Nz, Nx)
     T_cratonic = np.ones_like(X) * T_cratonic[:, None] #(Nz, Nx)
     
     xcenter = Lx/2
     xregion_cratonic = (X <= xcenter - L_nc/2 - L_retreat) | (X >= xcenter + L_nc/2)
     xregion_non_cratonic = (X > xcenter - L_nc/2) & (X < xcenter + L_nc/2)
+
+    #Applying the cratonic temperature profile in initial temperature field (T)
     T[xregion_cratonic] = T_cratonic[xregion_cratonic]
     # print('shape T: ', np.shape(T))
 
@@ -825,9 +842,11 @@ if(velocity_from_ascii == True):
 
 
     if(variable_bcv == True):
-        var_bcv = f""" 2
-                    30.0 -1.0
-                    60.0 1.0e-18
+        var_bcv = f""" 4
+                    {ti_convergence} -1.0
+                    {ti_quiescence} 0.01
+                    {tf_quiescence} -100.0
+                    {time_max/1.0e6} 0.01
                     """
 
         # Create the parameter file
@@ -889,6 +908,8 @@ print(f"\tLz: {Lz*1.0e-3} km")
 print(f"\tNx: {Nx}")
 print(f"\tNz: {Nz}")
 print(f"Resolution dx x dz: {1.0e-3*Lx/(Nx-1)} x {1.0e-3*Lz/(Nz-1)} km2")
+if(variable_bcv == True):
+    print(f"Time of quiescence: {dt_quiescence} Myr")
 print('Layers thickness:')
 print(f"\tair: {thickness_sa*1.0e-3} km")
 print(f"\tsediments: {thickness_sed/1000} km")
@@ -936,6 +957,9 @@ scenario_infos.append(f"\tNx: {Nx}")
 scenario_infos.append(f"\tNz: {Nz}")
 scenario_infos.append(f"Resolution dx x dz: {1.0e-3*Lx/(Nx-1)} x {1.0e-3*Lz/(Nz-1)} km2")
 scenario_infos.append(' ')
+if(variable_bcv == True):
+    scenario_infos.append(f"Time of quiescence: {dt_quiescence} Myr")
+    scenario_infos.append(' ')
 scenario_infos.append('Layers thickness:')
 scenario_infos.append(f"\tair: {thickness_sa*1.0e-3} km")
 scenario_infos.append(f"\tsediments: {thickness_sed/1000} km")
@@ -964,7 +988,8 @@ scenario_infos.append(' ')
 scenario_infos.append(f"Preset of initial temperature field: {preset}")
 scenario_infos.append(f"Surface process: {sp_surface_processes}")
 scenario_infos.append(f"Velocity field: {velocity_from_ascii}")
-scenario_infos.append(f"inital velocity: {vL*(365 * 24 * 3600)*2*100} cm/yr") 
+if(velocity_from_ascii==True):
+    scenario_infos.append(f"inital velocity: {vL*(365 * 24 * 3600)*2*100} cm/yr") 
 scenario_infos.append(f"Variable velocity field: {variable_bcv}")
 scenario_infos.append(f"Climate change: {climate_change_from_ascii}")
 scenario_infos.append(f"Periodic Boundary: {periodic_boundary}")
@@ -979,9 +1004,10 @@ np.savetxt('infos_'+path[-1] + '.txt', scenario_infos, fmt="%s")
 #Creating run_scripts
 ##############################################################################
 
-linux = True
-mac = True
+linux = False
+mac = False
 aguia = False
+hypatia = True
 
 mandyoc_options = '-seed 0,5,8 -strain_seed 0.0,1.0,1.0'
 
@@ -1138,6 +1164,70 @@ if(aguia):
         '''
     with open('run_aguia.sh', 'w') as f:
         for line in run_aguia.split('\n'):
+            line = line.strip()
+            if len(line):
+                f.write(' '.join(line.split()) + '\n')
+
+if(hypatia):
+
+    dirname = '${PWD##*/}'
+    main_folders = '/home/joao'
+    run_hypatia = f'''
+    #!/usr/bin/env bash
+    #SBATCH --mail-type=BEGIN,END,FAIL         			# Mail events (NONE, BEGIN, END, FAIL, ALL)
+    #SBATCH --mail-user=joao.macedo.silva@usp.br		# Where to send mail
+    #SBATCH --ntasks={str(int(ncores))}
+    #SBATCH --nodes=1
+    #SBATCH --cpus-per-task=1
+    #SBATCH --time 72:00:00 # 16 horas; poderia ser “2-” para 2 dias; máximo “8-”
+    #SBATCH --job-name mandyoc-jpms
+    #SBATCH --output slurm_%j.log
+
+    #run the application:
+    PETSC_DIR='{main_folders}/opt/petsc'
+    PETSC_ARCH='arch-label-optimized/bin/mpirun'
+    MANDYOC='{main_folders}/opt/mandyoc/bin/mandyoc'
+    MANDYOC_OPTIONS='{mandyoc_options}'
+    $PETSC_DIR/$PETSC_ARCH -n {str(int(ncores))} $MANDYOC $MANDYOC_OPTIONS
+
+
+    DIRNAME={dirname}
+
+    # Primeiro zipa os arquivos fixos
+    zip "$DIRNAME.zip" interfaces.txt param.txt input*_0.txt vel_bc.txt velz_bc.txt run*.sh
+
+    # Lista de padrões
+    patterns=(
+        "bc_velocity_*.txt"
+        "density_*.txt"
+        "heat_*.txt"
+        "pressure_*.txt"
+        "sp_surface_global_*.txt"
+        "strain_*.txt"
+        "temperature_*.txt"
+        "time_*.txt"
+        "velocity_*.txt"
+        "viscosity_*.txt"
+        "scale_bcv.txt"
+        "step*.txt"
+        "Phi*.txt"
+        "dPhi*.txt"
+        "X_depletion*.txt"
+        "*.bin*.txt"
+        "bc*-1.txt"
+    )
+
+    # Faz um loop e usa find para evitar o erro "argument list too long"
+    for pat in "${'patterns[@]'}"; do
+        find . -maxdepth 1 -type f -name "$pat" -exec zip -u "$DIRNAME.zip" {{}} +
+    done
+
+    for pat in "${'patterns[@]'}"; do
+        find . -maxdepth 1 -type f -name "$pat" -exec rm -f {{}} +
+    done
+    '''
+    with open('run_hypatia.sh', 'w') as f:
+        for line in run_hypatia.split('\n'):
             line = line.strip()
             if len(line):
                 f.write(' '.join(line.split()) + '\n')
