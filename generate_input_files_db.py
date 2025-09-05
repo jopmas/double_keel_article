@@ -301,8 +301,8 @@ rho_dec = 2350.0
 rho_upper_crust = 2700.0
 rho_lower_crust = 2800.0
 rho_seed = 2800.0
-rho_mlit = 3354.0 #phanerozoic
-rho_mlit_uc = 3310.0 #archean
+rho_mlit = 3300.0 #3354.0 #phanerozoic
+rho_mlit_uc = 3300.0 #3310.0 #archean
 rho_mlit_lc = 3330.0 #proterozoic
 rho_ast = 3378.0
 
@@ -313,9 +313,18 @@ H_dec = 1.25e-6 / 2700.0
 H_upper_crust = 1.25e-6 / 2700.0 #9.259E-10
 H_lower_crust = 0.2e-6 / 2800.0 #2.85E-10
 H_seed = 0.2e-6 / 2800.0
-H_mlit = 9.0e-12               
-H_mlit_uc = 9.0e-12
-H_mlit_lc = 9.0e-12
+
+# radiogenic_heat_mlit = True
+radiogenic_heat_mlit = False
+if(radiogenic_heat_mlit):
+    H_mlit = 9.0e-12               
+    H_mlit_uc = 9.0e-12
+    H_mlit_lc = 9.0e-12
+else:
+    H_mlit = 0.0 #9.0e-12               
+    H_mlit_uc = 0.0 #9.0e-12
+    H_mlit_lc = 0.0 #9.0e-12
+
 H_ast = 0.0 #Turccote book: 7.38e-12 #Default is 0.0
 
 #Pre exponential constant (Pa**-n s**-1)
@@ -423,12 +432,11 @@ if(variable_bcv == True):
 
     time_max = (tf_quiescence + dt_rifting2)*1.0e6 #210.0e6
 else:
-    time_max = 435.0e6
+    # time_max = 435.0e6
+    time_max = 500.0e6
 
 dt_max                           = 10.0e3 #default
-step_print                       = 25
-
-
+step_print                       = 100#25
 
 if(sp_surface_processes == True):
     precipitation_profile_from_ascii = True #False
@@ -933,6 +941,7 @@ print(f"\tnon cratonic mantle lithosphere: {C_mlit}")
 print(f"\tupper cratonic mantle lithosphere: {C_mlit_uc}")
 print(f"\tlower cratonic mantle lithosphere: {C_mlit_lc}")
 print(f"Preset of initial temperature field: {preset}")
+print(f"Radiogenic heat in lithospheric mantle: {radiogenic_heat_mlit}")
 print(f"Surface process: {sp_surface_processes}")
 print(f"Velocity field: {velocity_from_ascii}")
 print(f"Variable velocity field: {variable_bcv}")
@@ -986,6 +995,7 @@ scenario_infos.append(f"\tupper cratonic mantle lithosphere: {C_mlit_uc}")
 scenario_infos.append(f"\tlower cratonic mantle lithosphere: {C_mlit_lc}")
 scenario_infos.append(' ')
 scenario_infos.append(f"Preset of initial temperature field: {preset}")
+scenario_infos.append(f"Radiogenic heat in lithospheric mantle: {radiogenic_heat_mlit}")
 scenario_infos.append(f"Surface process: {sp_surface_processes}")
 scenario_infos.append(f"Velocity field: {velocity_from_ascii}")
 if(velocity_from_ascii==True):
@@ -1190,11 +1200,61 @@ if(hypatia):
     MANDYOC_OPTIONS='{mandyoc_options}'
     $PETSC_DIR/$PETSC_ARCH -n {str(int(ncores))} $MANDYOC $MANDYOC_OPTIONS
 
+    bash zipper.sh
+    bash clean.sh
+    '''
+    with open('run_hypatia.sh', 'w') as f:
+        for line in run_hypatia.split('\n'):
+            line = line.strip()
+            if len(line):
+                f.write(' '.join(line.split()) + '\n')
 
-    DIRNAME={dirname}
 
-    # Primeiro zipa os arquivos fixos
-    zip "$DIRNAME.zip" interfaces.txt param.txt input*_0.txt vel_bc.txt velz_bc.txt run*.sh
+zipper = f'''
+        #!/usr/bin/env bash
+        DIRNAME={dirname}
+
+        # Primeiro zipa os arquivos fixos
+        zip "$DIRNAME.zip" interfaces.txt param.txt input*_0.txt vel_bc.txt velz_bc.txt run*.sh
+
+        # Lista de padrões
+        patterns=(
+            "bc_velocity_*.txt"
+            "density_*.txt"
+            "heat_*.txt"
+            "pressure_*.txt"
+            "sp_surface_global_*.txt"
+            "strain_*.txt"
+            "temperature_*.txt"
+            "time_*.txt"
+            "velocity_*.txt"
+            "viscosity_*.txt"
+            "scale_bcv.txt"
+            "step*.txt"
+            "Phi*.txt"
+            "dPhi*.txt"
+            "X_depletion*.txt"
+            "*.bin*.txt"
+            "bc*-1.txt"
+        )
+
+        # Faz um loop e usa find para evitar o erro "argument list too long"
+        for pat in "${'patterns[@]'}"; do
+            find . -maxdepth 1 -type f -name "$pat" -exec zip -u "$DIRNAME.zip" {{}} +
+        done
+
+        for pat in "${'patterns[@]'}"; do
+            find . -maxdepth 1 -type f -name "$pat" -exec rm -f {{}} +
+        done
+    '''
+with open('zipper.sh', 'w') as f:
+    for line in zipper.split('\n'):
+        line = line.strip()
+        if len(line):
+            f.write(' '.join(line.split()) + '\n')
+
+clean = f'''
+    #!/usr/bin/env bash
 
     # Lista de padrões
     patterns=(
@@ -1213,26 +1273,22 @@ if(hypatia):
         "Phi*.txt"
         "dPhi*.txt"
         "X_depletion*.txt"
-        "*.bin*.txt"
+        "*.bin*"
         "bc*-1.txt"
     )
 
-    # Faz um loop e usa find para evitar o erro "argument list too long"
-    for pat in "${'patterns[@]'}"; do
-        find . -maxdepth 1 -type f -name "$pat" -exec zip -u "$DIRNAME.zip" {{}} +
-    done
-
+    # Para cada padrão, procurar e remover com segurança
     for pat in "${'patterns[@]'}"; do
         find . -maxdepth 1 -type f -name "$pat" -exec rm -f {{}} +
     done
-    '''
-    with open('run_hypatia.sh', 'w') as f:
-        for line in run_hypatia.split('\n'):
-            line = line.strip()
-            if len(line):
-                f.write(' '.join(line.split()) + '\n')
+'''
+with open('clean.sh', 'w') as f:
+    for line in clean.split('\n'):
+        line = line.strip()
+        if len(line):
+            f.write(' '.join(line.split()) + '\n')
 
 #zip input files
 filename = 'inputs_'+path[-1]+'.zip'
-files_list = ' infos*.txt interfaces.txt param.txt input*_0.txt run*.sh vel*.txt scale_bcv.txt *.png precipitation.txt climate.txt'
+files_list = ' infos*.txt interfaces.txt param.txt input*_0.txt run*.sh vel*.txt scale_bcv.txt *.png precipitation.txt climate.txt zipper.sh clean.sh'
 os.system('zip '+filename+files_list)
