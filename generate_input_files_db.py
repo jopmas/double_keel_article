@@ -649,7 +649,7 @@ if(preset == False):
     cond_cratonic = cond1_cratonic | (T_cratonic == 0)
     dz = Lz / (Nz - 1)
     
-    while t < 500.0e6:
+    while t < 2000.0e6:
         #non-cratonic region
         T[1:-1] += (
             kappa * dt_sec * ((T[2:] + T[:-2] - 2 * T[1:-1]) / dz ** 2)
@@ -1236,15 +1236,11 @@ zipper = f'''
             "X_depletion*.txt"
             "*.bin*.txt"
             "bc*-1.txt"
-        )
+            )
 
         # Faz um loop e usa find para evitar o erro "argument list too long"
-        for pat in "${'patterns[@]'}"; do
+        for pat in "${{patterns[@]}}"; do
             find . -maxdepth 1 -type f -name "$pat" -exec zip -u "$DIRNAME.zip" {{}} +
-        done
-
-        for pat in "${'patterns[@]'}"; do
-            find . -maxdepth 1 -type f -name "$pat" -exec rm -f {{}} +
         done
     '''
 with open('zipper.sh', 'w') as f:
@@ -1254,34 +1250,34 @@ with open('zipper.sh', 'w') as f:
             f.write(' '.join(line.split()) + '\n')
 
 clean = f'''
-    #!/usr/bin/env bash
+        #!/usr/bin/env bash
 
-    # Lista de padrões
-    patterns=(
-        "bc_velocity_*.txt"
-        "density_*.txt"
-        "heat_*.txt"
-        "pressure_*.txt"
-        "sp_surface_global_*.txt"
-        "strain_*.txt"
-        "temperature_*.txt"
-        "time_*.txt"
-        "velocity_*.txt"
-        "viscosity_*.txt"
-        "scale_bcv.txt"
-        "step*.txt"
-        "Phi*.txt"
-        "dPhi*.txt"
-        "X_depletion*.txt"
-        "*.bin*"
-        "bc*-1.txt"
-    )
+        # Lista de padrões
+        patterns=(
+            "bc_velocity_*.txt"
+            "density_*.txt"
+            "heat_*.txt"
+            "pressure_*.txt"
+            "sp_surface_global_*.txt"
+            "strain_*.txt"
+            "temperature_*.txt"
+            "time_*.txt"
+            "velocity_*.txt"
+            "viscosity_*.txt"
+            "scale_bcv.txt"
+            "step*.txt"
+            "Phi*.txt"
+            "dPhi*.txt"
+            "X_depletion*.txt"
+            "*.bin*.txt"
+            "bc*-1.txt"
+            )
 
-    # Para cada padrão, procurar e remover com segurança
-    for pat in "${'patterns[@]'}"; do
-        find . -maxdepth 1 -type f -name "$pat" -exec rm -f {{}} +
-    done
-'''
+        # Para cada padrão, procurar e remover com segurança
+        for pat in "${{patterns[@]}}"; do
+            find . -maxdepth 1 -type f -name "$pat" -exec rm -f {{}} +
+        done
+    '''
 with open('clean.sh', 'w') as f:
     for line in clean.split('\n'):
         line = line.strip()

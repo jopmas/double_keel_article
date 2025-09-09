@@ -256,7 +256,7 @@ dt = int(t1 - t0)
 
 start = int(t0)
 end = int(dataset.time.size - 1)
-step = 5
+step = 1
 
 # start = 4
 # end = 5
