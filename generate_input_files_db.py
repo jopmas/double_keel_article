@@ -163,8 +163,8 @@ experiemnts = {
                }
 
 # ncores = 20
-# ncores = 64
-ncores = 128
+ncores = 64
+# ncores = 128
 
 ###############################################################################################################################################
 # Domain and interfaces
@@ -311,8 +311,10 @@ rho_ast = 3378.0
 H_air = 0.0
 H_sed = 1.25e-6 / 2700.0
 H_dec = 1.25e-6 / 2700.0
-H_upper_crust = 1.25e-6 / 2700.0 #9.259E-10
-H_lower_crust = 0.2e-6 / 2800.0 #2.85E-10
+# H_upper_crust = 1.25e-6 / 2700.0 #9.259E-10 #old
+# H_lower_crust = 0.2e-6 / 2800.0 #2.85E-10 #old
+H_upper_crust = 1.67e-6 / 2700.0 #
+H_lower_crust = 0.19e-6 / 2800.0 #
 H_seed = 0.2e-6 / 2800.0
 
 # radiogenic_heat_mlit = True
@@ -427,7 +429,11 @@ else:
 if(variable_bcv == True):
     ti_convergence = 25.0
     ti_quiescence = 75.0
-    dt_quiescence = 300
+    dt_quiescence = 0
+    # dt_quiescence = 30
+    # dt_quiescence = 60
+    # dt_quiescence = 100
+    # dt_quiescence = 300
     tf_quiescence = ti_quiescence + dt_quiescence
     dt_rifting2 = 60.0
 
@@ -437,7 +443,7 @@ else:
     time_max = 500.0e6
 
 dt_max                           = 10.0e3 #default
-step_print                       = 100#25
+step_print                       = 50#25
 
 if(sp_surface_processes == True):
     precipitation_profile_from_ascii = True #False
