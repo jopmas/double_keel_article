@@ -6,7 +6,6 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import interp2d
 from matplotlib.pyplot import cycler
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
-from cmcrameri import cm as cr
 
 import xarray as xr
 
@@ -113,9 +112,10 @@ plt.rc('ytick', labelsize=label_size)
 #Install the following package from (https://www.fabiocrameri.ch/colourmaps/) for inclusive color palletes
 #or comment set crameri_colors as False
 
-crameri_colors=True
-# crameri_colors=False
+# crameri_colors=True
+crameri_colors=False
 if(crameri_colors):
+    from cmcrameri import cm as cr
     def get_cycle(cmap, N=None, use_index="auto"):
         if isinstance(cmap, str):
             if use_index == "auto":
@@ -163,6 +163,7 @@ experiemnts = {
                }
 
 # ncores = 20
+# ncores = 64
 ncores = 128
 
 ###############################################################################################################################################
@@ -415,8 +416,8 @@ sp_surface_processes             = False
 #External inputs: bc velocity, velocity field, precipitation and
 #climate change
 
-# velocity_from_ascii              = True
-velocity_from_ascii              = False
+velocity_from_ascii              = True
+# velocity_from_ascii              = False
 if(velocity_from_ascii == True):
     variable_bcv                     = True
 else:
