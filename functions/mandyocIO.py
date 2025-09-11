@@ -1514,7 +1514,7 @@ def plot_property(dataset, prop, xlims, ylims, model_path,
                    }
 
     #limits of colorbars
-    vals_minmax = {'density':             [0.0, 3378.],
+    vals_minmax = {'density':             [3300,3380],#[0.0, 3378.],
                    'radiogenic_heat':     [1.0E-13, 1.0E-9],
                    'lithology':           [None, None],
                    'pressure':            [-1.0E-3, 1.0],
@@ -1783,9 +1783,24 @@ def plot_property(dataset, prop, xlims, ylims, model_path,
                     Rhoi,
                     # levels = [200., 2750, 2900, 3365, 3900],
                     # colors = [color_uc, color_lc, color_lit, color_ast]
-                    levels=[200.,2350,2450,2750,2900,3325,3355,3365,3378],
-                    colors=[color_sed,color_dec,color_uc,color_lc,color_lit,color_mlit_uc,color_mlit_lc,color_ast])
-        
+                    levels=[200.,
+                            2350,
+                            2450,
+                            2750,
+                            2900,
+                            3325,
+                            3355,
+                            3365,
+                            3378],
+                    colors=[color_sed,
+                            color_dec,
+                            color_uc,
+                            color_lc,
+                            color_lit,
+                            color_mlit_uc,
+                            color_mlit_lc,
+                            color_ast])
+
         im=ax.imshow(data.T,
                      cmap = 'Greys',
                      origin = 'lower',

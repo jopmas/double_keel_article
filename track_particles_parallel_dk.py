@@ -51,13 +51,11 @@ take_asthenosphere = False
 
 if(take_specific_time):
     instant_to_take = 20 #Myr
-    print(f"Track particles until {instant_to_take} Myr")
     idx = (np.abs(Tdataset.time.values - instant_to_take)).argmin()
     step_final = Tdataset.step.values[idx]
 else:
     step_final = Tdataset.step.values[-1] #14000
 
-print("Final step: ", step_final)
 
 x=[]
 z=[]
@@ -66,7 +64,6 @@ layer_vec=[]
 
 steps0 = sorted(glob.glob("step_0_*.txt"), key=os.path.getmtime)
 ncores = len(steps0) #20
-print(f"Number of cores: {ncores}")
 
 # ncores = 16
 #Reading the data of final step
@@ -136,8 +133,6 @@ x_end = 1100.0e3
 
 # double_keel = False
 double_keel = True
-print(f"Double keel model") if double_keel else print("Homogeneous model")
-print(f"Selecting particles between {x_begin/1000} and {x_end/1000} km, above {search_thickness/1000} km")
 
 if(double_keel):
     asthenosphere_code = 0
@@ -191,18 +186,6 @@ n_tracked_upper_crust = layers_selec[layers_selec==upper_crust_code].size
 n_tracked_decolement = layers_selec[layers_selec==decolement_code].size
 n_tracked_sediments = layers_selec[layers_selec==sediments_code].size
 
-print(f"x size: {np.size(x)}")
-print(f"Number of tracked particles (n): {np.size(part_selec)}, where:")
-print(f"Asthenosphere: {n_tracked_ast}")
-if(double_keel):
-    print(f"Lower Craton: {n_tracked_lower_craton}")
-    print(f"Upper Craton: {n_tracked_upper_craton}")
-print(f"Mantle Lithosphere: {n_tracked_mantle_lithosphere}")
-print(f"Lower Crust: {n_tracked_lower_crust1 + n_tracked_lower_crust2} ")
-print(f"Upper Crust: {n_tracked_upper_crust}")
-print(f"Decolement: {n_tracked_decolement}")
-print(f"Sediments: {n_tracked_sediments}\n")
-
 pressure = []
 temperature = []
 
@@ -211,7 +194,7 @@ start = int(Tdataset.time.values[0])
 # end = int(Tdataset.time[:idx+1].size) if take_specific_time else int(Tdataset.time.size - 1) # DANDO PAU NESSA CARALHA
 end = int(Tdataset.time[:idx].size) if take_specific_time else int(Tdataset.time.size - 1)
 # end = int(Tdataset.time[:idx+15].size)
-print(f'Start idx: {start}, End idx: {end}, time of end: {Tdataset.time.values[end]}')
+
 step = 1
 
 # all_vecx_track = []
@@ -357,13 +340,65 @@ ds = xr.Dataset(
 
 ds.to_netcdf("_track_xzPT_all_steps.nc")
 
+model_path = os.getcwd() # Get local file
+model_name = model_path.split('/')[-1]
+##################################
+print(f"Double keel model") if double_keel else print("Homogeneous model")
+print(f"Number of cores: {ncores}")
+print(f"Selecting particles between {x_begin/1000} and {x_end/1000} km, above {search_thickness/1000} km")
+if(take_specific_time):
+    print(f"Track particles until {instant_to_take} Myr")
+print("Final step: ", step_final)
+print(f'Start idx: {start}, End idx: {end}, time of end: {Tdataset.time.values[end]}')
 
+print(f"x size: {np.size(x)}")
+print(f"Number of tracked particles (n): {np.size(part_selec)}, where:")
+print(f"Asthenosphere: {n_tracked_ast}")
+if(double_keel):
+    print(f"Lower Craton: {n_tracked_lower_craton}")
+    print(f"Upper Craton: {n_tracked_upper_craton}")
+print(f"Mantle Lithosphere: {n_tracked_mantle_lithosphere}")
+print(f"Lower Crust: {n_tracked_lower_crust1 + n_tracked_lower_crust2}")
+print(f"Upper Crust: {n_tracked_upper_crust}")
+print(f"Decolement: {n_tracked_decolement}")
+print(f"Sediments: {n_tracked_sediments}\n")
+
+print(f"len of:\n all_vecx_track {len(all_vecx_track)}\n all_vecz_track {len(all_vecz_track)}\n all_present_pressure {len(all_present_pressure)}\n all_present_temperature {len(all_present_temperature)}\n all_time {len(all_time)}\n all_step {len(all_step)}")
 print(f"n_tracked x len(all_time) = {n_tracked}*{len(all_time)} = {n_tracked*len(all_time)}")
+
+track_infos = ["Tracking infos:"]
+track_infos.append(' ')
+track_infos.append(f"Double keel model") if double_keel else track_infos.append("Homogeneous model")
+track_infos.append(f"Number of cores: {ncores}")
+track_infos.append(' ')
+track_infos.append('Selected Region:')
+track_infos.append(f"\tSelecting particles between {x_begin/1000} and {x_end/1000} km, above {search_thickness/1000} km")
+track_infos.append(' ')
+if(take_specific_time):
+    track_infos.append(f"Track particles until {instant_to_take} Myr")
+track_infos.append(f"Final step: {step_final}")
+track_infos.append(f'Start idx: {start}, End idx: {end}, time of end: {Tdataset.time.values[end]}')
+track_infos.append(' ')
+track_infos.append(f"x size: {np.size(x)}")
+track_infos.append(f"Number of tracked particles (n): {np.size(part_selec)}, where:")
+track_infos.append(f"Asthenosphere: {n_tracked_ast}")
+if(double_keel):
+    track_infos.append(f"Lower Craton: {n_tracked_lower_craton}")
+    track_infos.append(f"Upper Craton: {n_tracked_upper_craton}")
+track_infos.append(f"Mantle Lithosphere: {n_tracked_mantle_lithosphere}")
+track_infos.append(f"Lower Crust: {n_tracked_lower_crust1 + n_tracked_lower_crust2}")
+track_infos.append(f"Upper Crust: {n_tracked_upper_crust}")
+track_infos.append(f"Decolement: {n_tracked_decolement}")
+track_infos.append(f"Sediments: {n_tracked_sediments}\n")
+track_infos.append(' ')
+track_infos.append(f"len of:\n all_vecx_track {len(all_vecx_track)}\n all_vecz_track {len(all_vecz_track)}\n all_present_pressure {len(all_present_pressure)}\n all_present_temperature {len(all_present_temperature)}\n all_time {len(all_time)}\n all_step {len(all_step)}")
+track_infos.append(f"n_tracked x len(all_time) = {n_tracked}*{len(all_time)} = {n_tracked*len(all_time)}")
+np.savetxt(f"infos_track_{model_name}.txt", track_infos, fmt="%s")
+
+##################################
 
 # Compressing the files 
 print("Zipping files")
-model_path = os.getcwd() # Get local file
-model_name = model_path.split('/')[-1]
 subprocess.run(f"zip {model_name}.zip track*.txt", shell=True, check=True, capture_output=True, text=True)
 print("Files zipped")
 

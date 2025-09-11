@@ -168,6 +168,7 @@ z_track = np.reshape(z_track,(steps,n))
 P = np.reshape(P,(steps,n))/1.0e3 #GPa
 T = np.reshape(T,(steps,n))
 T_maxs = np.max(T, axis=0) #get the maximum temperature for each particle to categorize by temperature
+P_maxs = np.max(P, axis=0) #get the maximum pressure for each particle to categorize by temperature
 
 particles_layers = trackdataset.particles_layers.values[::-1] #code of the tracked layers
 
@@ -256,7 +257,7 @@ dt = int(t1 - t0)
 
 start = int(t0)
 end = int(dataset.time.size - 1)
-step = 1
+step = 4
 
 # start = 4
 # end = 5
@@ -280,8 +281,8 @@ line_alpha = 1.0
 color_incremental_melt = 'xkcd:bright pink'
 color_depleted_mantle='xkcd:bright purple'
 
-def plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle, markersize=4, linewidth=0.15, line_alpha=0.6, h_air=40.0e3,
-                                                color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
+def plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, P_max, particle, markersize=4, linewidth=0.15, line_alpha=0.6, h_air=40.0e3,
+                                                color_mid_T='xkcd:dark green', color_high_T_wedge='xkcd:bright purple', color_high_T_subducted='xkcd:orange',
                                                 plot_steps=False):
     '''
     Plot the particles of a specific layer with temperature coding.
@@ -306,13 +307,21 @@ def plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_tr
     - color_high_T: The color for high temperature particles.
     - plot_steps: Whether to plot the steps.
     '''
-    
-    if(T_max >=0 and T_max < 400.0):
-        color = color_low_T
+
     if(T_max >= 400.0 and T_max < 900.0):
         color = color_mid_T
     if(T_max >= 900.0):
-        color = color_high_T
+        if(P_max < 2.0):
+            color = color_high_T_wedge
+        if(P_max >= 2.0):
+            color = color_high_T_subducted
+    
+    # if(T_max >=0 and T_max < 400.0):
+    #     color = color_low_T
+    # if(T_max >= 400.0 and T_max < 900.0):
+    #     color = color_mid_T
+    # if(T_max >= 900.0):
+    #     color = color_high_T
 
     axs[0].plot(x_track[i, particle]/1.0e3,
                     z_track[i, particle]/1.0e3+h_air/1.0e3,
@@ -496,6 +505,10 @@ y_text_sub_greenschiest = np.mean(vertices_sub_greenschiest[:, 1])
 alpha_sub_greenschiest = 0.1
 fsize_sub_greenschiest = 4
 
+color_mid_T='xkcd:dark green'
+color_high_T_wedge='xkcd:bright purple'
+color_high_T_subducted='xkcd:orange'
+
 with pymp.Parallel() as p:
     for i in p.range(start, end, step):
         
@@ -517,24 +530,17 @@ with pymp.Parallel() as p:
                         isotherms = [500, 600, 700,800,900, 1300],
                         isotherms_linewidth = 0.5,
                         plot_colorbar=plot_colorbar,
-                        bbox_to_anchor=(0.85,#horizontal position respective to parent_bbox or "loc" position
+                        bbox_to_anchor=(0.05,#horizontal position respective to parent_bbox or "loc" position
                                         0.20,# vertical position
-                                        0.12,# width
-                                        0.35),
+                                        0.1,# width
+                                        0.25),
                         plot_melt = plot_melt,
                         color_incremental_melt = color_incremental_melt,
                         color_depleted_mantle = color_depleted_mantle
                         )
 
-            for particle, particle_layer, T_max in zip(range(n), particles_layers, T_maxs):
+            for particle, particle_layer, T_max, P_max in zip(range(n), particles_layers, T_maxs, P_maxs):
                 #Plot particles in prop subplot
-                
-                if(T_max >=0 and T_max < 400.0):
-                    color = 'xkcd:bright purple'
-                if(T_max >= 400.0 and T_max < 900.0):
-                    color = 'xkcd:dark green'
-                if(T_max >= 900.0):
-                    color = 'xkcd:orange'
 
                 # if((plot_mantle_lithosphere_particles == False) & (particle_layer == mantle_lithosphere_code)): #lithospheric mantle particles
                 #     plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
@@ -556,9 +562,9 @@ with pymp.Parallel() as p:
                 #                                                     plot_steps=False)
 
                 if((plot_lower_crust_particles == True) & ((particle_layer == lower_crust1_code) | (particle_layer == lower_crust2_code))):
-                    plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
+                    plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, P_max, particle,
                                                             markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                                                            color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
+                                                            color_mid_T=color_mid_T, color_high_T_wedge=color_high_T_wedge, color_high_T_subducted=color_high_T_subducted,
                                                             plot_steps=False)
                     
                 # if((plot_upper_crust_particles == True) & (particle_layer == upper_crust_code)):
@@ -627,12 +633,13 @@ with pymp.Parallel() as p:
             # ax1.yaxis.set_label_position("left")
 
             #creating legend for particles
-            color_low_T='xkcd:bright purple'
-            color_mid_T='xkcd:dark green'
-            color_high_T='xkcd:orange'
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_low_T, markersize=markersize, label='Lower temperature', zorder=60)
+            # axs[1].plot([-10,-10], [-10,-10], '-', color=color_low_T, markersize=markersize, label='Lower temperature', zorder=60)
+            # axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Intermediate temperature', zorder=60)
+            # axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T, markersize=markersize, label='Higher temperature', zorder=60)
+
             axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Intermediate temperature', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T, markersize=markersize, label='Higher temperature', zorder=60)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_wedge, markersize=markersize, label='Wedge material (HT)', zorder=60)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_subducted, markersize=markersize, label='Subducted material (HT)', zorder=60)
 
             axs[1].legend(loc='upper left', ncol=1, fontsize=8, handlelength=0, handletextpad=0, labelcolor='linecolor')
 

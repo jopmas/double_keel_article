@@ -302,8 +302,8 @@ rho_dec = 2350.0
 rho_upper_crust = 2700.0
 rho_lower_crust = 2800.0
 rho_seed = 2800.0
-rho_mlit = 3300.0 #3354.0 #phanerozoic
-rho_mlit_uc = 3300.0 #3310.0 #archean
+rho_mlit = 3330.0 #3354.0 #phanerozoic
+rho_mlit_uc = 3330.0 #3310.0 #archean
 rho_mlit_lc = 3330.0 #proterozoic
 rho_ast = 3378.0
 
@@ -429,10 +429,10 @@ else:
 if(variable_bcv == True):
     ti_convergence = 25.0
     ti_quiescence = 75.0
-    dt_quiescence = 0
+    # dt_quiescence = 0
     # dt_quiescence = 30
     # dt_quiescence = 60
-    # dt_quiescence = 100
+    dt_quiescence = 100
     # dt_quiescence = 300
     tf_quiescence = ti_quiescence + dt_quiescence
     dt_rifting2 = 60.0
