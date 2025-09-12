@@ -113,8 +113,8 @@ search_thickness = 50.0e3
 # x_begin = 700.0e3
 # x_end = 1400.0e3
 
-x_begin = 700.0e3
-x_end = 1100.0e3
+x_begin = 500.0e3
+x_end = 1300.0e3
 
 # x_begin = 600.0e3
 # x_end = 1400.0e3

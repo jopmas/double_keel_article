@@ -1188,7 +1188,7 @@ if(aguia):
 if(hypatia):
 
     dirname = '${PWD##*/}'
-    main_folders = '/home/joao'
+    main_folders = '/scratch/joao'
     run_hypatia = f'''
     #!/usr/bin/env bash
     #SBATCH --mail-type=BEGIN,END,FAIL         			# Mail events (NONE, BEGIN, END, FAIL, ALL)
@@ -1200,13 +1200,16 @@ if(hypatia):
     #SBATCH --job-name mandyoc-jpms
     #SBATCH --output slurm_%j.log
 
-    #run the application:
+    #Setup of Mandyoc variables:
     PETSC_DIR='{main_folders}/opt/petsc'
     PETSC_ARCH='arch-label-optimized/bin/mpirun'
     MANDYOC='{main_folders}/opt/mandyoc/bin/mandyoc'
     MANDYOC_OPTIONS='{mandyoc_options}'
+
+    #run mandyoc
     $PETSC_DIR/$PETSC_ARCH -n {str(int(ncores))} $MANDYOC $MANDYOC_OPTIONS
 
+    #run of auxiliary scripts to zip and clean the folder
     bash zipper.sh
     bash clean.sh
     '''
