@@ -163,8 +163,8 @@ experiemnts = {
                }
 
 # ncores = 20
-ncores = 64
-# ncores = 128
+# ncores = 64
+ncores = 128
 
 ###############################################################################################################################################
 # Domain and interfaces
@@ -432,8 +432,8 @@ if(variable_bcv == True):
     # dt_quiescence = 0
     # dt_quiescence = 30
     # dt_quiescence = 60
-    dt_quiescence = 100
-    # dt_quiescence = 300
+    # dt_quiescence = 100
+    dt_quiescence = 300
     tf_quiescence = ti_quiescence + dt_quiescence
     dt_rifting2 = 60.0
 
@@ -456,6 +456,12 @@ else:
 print_step_files                 = True
 
 checkered = False
+
+# magmatism = 'on'
+magmatism = 'off'
+
+rheol = 19
+
 #velocity bc
 top_normal_velocity                 = 'fixed'         # ok
 top_tangential_velocity             = 'free '         # ok
@@ -559,6 +565,7 @@ heat_capacity                       = 700.         # ok #default is 1250
 non_linear_method                   = on            # ok
 adiabatic_component                 = on            # ok
 radiogenic_component                = on            # ok
+magmatism                           = {magmatism}           # ok
 # Velocity boundary conditions
 top_normal_velocity                 = fixed         # ok
 top_tangential_velocity             = free          # ok
@@ -575,8 +582,7 @@ top_temperature                     = {top_temperature}         # ok
 bot_temperature                     = {bot_temperature}         # ok
 left_temperature                    = {left_temperature}         # ok
 right_temperature                   = {right_temperature}         # ok
-rheology_model                      = 9             # ok
-
+rheology_model                      = {rheol}             # ok
 T_initial                           = 3             # ok
 """
 
@@ -931,10 +937,10 @@ print(f"\tsediments: {thickness_sed/1000} km")
 print(f"\tdecolement: {thickness_decolement/1000} km")
 print(f"\tupper crust: {thickness_upper_crust*1.0e-3} km")
 print(f"\tlower crust: {thickness_lower_crust*1.0e-3} km")
-print(f"\tnon cratonic mantle lithosphere: {thickness_litho} km")
+print(f"\tnon cratonic mantle lithosphere: {thickness_litho/1000} km")
 print(f"\tupper cratonic mantle lithosphere: {thickness_mlit_crat_up/1000} km")
 print(f"\tlower cratonic mantle lithosphere: {thickness_mlit_crat_bot/1000} km")
-print(f"\tcrust: {(thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)/1000}")
+print(f"\tcrust: {(thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)/1000} km")
 print(f"\tnon cratonic lithosphere: {thickness_litho*1.0e-3} km")
 print(f"\tcratonic lithosphere: {thickness_crat_bot*1.0e-3} km")
 print('Important scale factors (C):')
@@ -958,6 +964,9 @@ print('Initial temperature field setup:')
 print(f"\tPreset of initial temperature field: {preset}")
 print(f"\tIncrease in mantle basal temperature (Ta): {DeltaT} oC")
 print(f"\tAssumed mantle Potential Temperature for diffusive model: {TP} oC")
+print(' ')
+print(f"Magmatism: {magmatism}")
+print(f'Rheol number in param file: {rheol}')
 
 #Save scenario infos
 scenario_infos = ['SCENARIO INFOS:']
@@ -982,10 +991,10 @@ scenario_infos.append(f"\tsediments: {thickness_sed/1000} km")
 scenario_infos.append(f"\tdecolement: {thickness_decolement/1000} km")
 scenario_infos.append(f"\tupper crust: {thickness_upper_crust*1.0e-3} km")
 scenario_infos.append(f"\tlower crust: {thickness_lower_crust*1.0e-3} km")
-scenario_infos.append(f"\tnon cratonic mantle lithosphere:{ thickness_litho} km")
+scenario_infos.append(f"\tnon cratonic mantle lithosphere: {thickness_litho/1000} km")
 scenario_infos.append(f"\tupper cratonic mantle lithosphere: {thickness_mlit_crat_up/1000} km")
 scenario_infos.append(f"\tlower cratonic mantle lithosphere: {thickness_mlit_crat_bot/1000} km")
-scenario_infos.append(f"\tcrust: {(thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)/1000}")
+scenario_infos.append(f"\tcrust: {(thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)/1000} km")
 scenario_infos.append(f"\tnon cratonic lithosphere: {thickness_litho*1.0e-3} km")
 scenario_infos.append(f"\tcratonic lithosphere: {thickness_crat_bot*1.0e-3} km")
 scenario_infos.append(' ')
@@ -1014,6 +1023,9 @@ scenario_infos.append('Initial temperature field setup:')
 scenario_infos.append(f"\tPreset of initial temperature field: {preset}")
 scenario_infos.append(f"\tIncrease in mantle basal temperature (Ta): {DeltaT} oC")
 scenario_infos.append(f"\tAssumed mantle Potential Temperature for diffusive model: {TP} oC")
+scenario_infos.append(' ')
+scenario_infos.append(f"Magmatism: {magmatism}")
+scenario_infos.append(f'Rheol number in param file: {rheol}')
 
 np.savetxt('infos_'+path[-1] + '.txt', scenario_infos, fmt="%s")
 

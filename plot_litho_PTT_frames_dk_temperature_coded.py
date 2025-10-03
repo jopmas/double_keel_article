@@ -56,7 +56,7 @@ datasets = [#Properties from mandyoc. Comment/uncomment to select properties of 
             'pressure',
             'strain',
             'strain_rate',### Read ascii outputs and save them as xarray.Datasets,
-            'surface',
+            # 'surface',
             'temperature',
             'viscosity'
             ]# Read data and convert them to xarray.Dataset
@@ -282,7 +282,10 @@ color_incremental_melt = 'xkcd:bright pink'
 color_depleted_mantle='xkcd:bright purple'
 
 def plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, P_max, particle, markersize=4, linewidth=0.15, line_alpha=0.6, h_air=40.0e3,
-                                                color_mid_T='xkcd:dark green', color_high_T_wedge='xkcd:bright purple', color_high_T_subducted='xkcd:orange',
+                                                color_wedge='xkcd:orange', #orogenic wedge rocks T<900 and P<2GPa
+                                               color_mid_T='xkcd:teal', #subducted crustal rocks 400<T<900 and P>2GPa
+                                               color_high_T_wedge='xkcd:raspberry', #orogenic wedge rocks T>900 and P<2GPa
+                                               color_high_T_subducted='xkcd:dirty purple', #subducted crustal rocks T>900 and P>2GPa
                                                 plot_steps=False):
     '''
     Plot the particles of a specific layer with temperature coding.
@@ -308,8 +311,19 @@ def plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_tr
     - plot_steps: Whether to plot the steps.
     '''
 
-    if(T_max >= 400.0 and T_max < 900.0):
-        color = color_mid_T
+    # if(T_max >= 400.0 and T_max < 900.0):
+    #     color = color_mid_T
+    # if(T_max >= 900.0):
+    #     if(P_max < 2.0):
+    #         color = color_high_T_wedge
+    #     if(P_max >= 2.0):
+    #         color = color_high_T_subducted
+
+    if(T_max >= 400 and T_max < 900.0):
+        if(P_max < 2.0):
+            color = color_wedge
+        if(P_max >= 2.0):
+            color = color_mid_T
     if(T_max >= 900.0):
         if(P_max < 2.0):
             color = color_high_T_wedge
@@ -505,9 +519,10 @@ y_text_sub_greenschiest = np.mean(vertices_sub_greenschiest[:, 1])
 alpha_sub_greenschiest = 0.1
 fsize_sub_greenschiest = 4
 
-color_mid_T='xkcd:dark green'
-color_high_T_wedge='xkcd:bright purple'
-color_high_T_subducted='xkcd:orange'
+color_wedge = 'xkcd:orange' #orogenic wedge rocks 400<T<900 and P<2GPa
+color_mid_T = 'xkcd:teal' #subducted crustal rocks 400<T<900 and P>2GPa
+color_high_T_wedge = 'xkcd:raspberry' #orogenic wedge rocks T>=900 and P<2GPa
+color_high_T_subducted = 'xkcd:dirty purple' #subducted crustal rocks T>900 and P>2GPa
 
 with pymp.Parallel() as p:
     for i in p.range(start, end, step):
@@ -527,7 +542,7 @@ with pymp.Parallel() as p:
                         fig,
                         axs[0],
                         plot_isotherms = plot_isotherms,
-                        isotherms = [500, 600, 700,800,900, 1300],
+                        isotherms = [500, 600, 700, 800,900, 1300],
                         isotherms_linewidth = 0.5,
                         plot_colorbar=plot_colorbar,
                         bbox_to_anchor=(0.05,#horizontal position respective to parent_bbox or "loc" position
@@ -564,7 +579,10 @@ with pymp.Parallel() as p:
                 if((plot_lower_crust_particles == True) & ((particle_layer == lower_crust1_code) | (particle_layer == lower_crust2_code))):
                     plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, P_max, particle,
                                                             markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                                                            color_mid_T=color_mid_T, color_high_T_wedge=color_high_T_wedge, color_high_T_subducted=color_high_T_subducted,
+                                                            color_wedge = 'xkcd:orange', #orogenic wedge rocks 400<T<900 and P<2GPa
+                                                            color_mid_T = 'xkcd:teal', #subducted crustal rocks 400<T<900 and P>2GPa
+                                                            color_high_T_wedge = 'xkcd:raspberry', #orogenic wedge rocks T>=900 and P<2GPa
+                                                            color_high_T_subducted = 'xkcd:dirty purple', #subducted crustal rocks T>900 and P>2GPa
                                                             plot_steps=False)
                     
                 # if((plot_upper_crust_particles == True) & (particle_layer == upper_crust_code)):
@@ -638,8 +656,8 @@ with pymp.Parallel() as p:
             # axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T, markersize=markersize, label='Higher temperature', zorder=60)
 
             axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Intermediate temperature', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_wedge, markersize=markersize, label='Wedge material (UHT)', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_subducted, markersize=markersize, label='Subducted material (UHT)', zorder=60)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_wedge, markersize=markersize, label='Wedge material (HT)', zorder=60)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_subducted, markersize=markersize, label='Subducted material (HT)', zorder=60)
 
             axs[1].legend(loc='upper left', ncol=1, fontsize=8, handlelength=0, handletextpad=0, labelcolor='linecolor')
 
