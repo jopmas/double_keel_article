@@ -1455,6 +1455,7 @@ def plot_property(dataset, prop, xlims, ylims, model_path,
                 ncores=20,
                 step_plot=1,
                 plot_melt=False,
+                sediments=True,
                 color_incremental_melt = 'xkcd:bright pink',
                 color_depleted_mantle='xkcd:bright purple',):
     '''
@@ -1779,28 +1780,33 @@ def plot_property(dataset, prop, xlims, ylims, model_path,
         # topo_interface -= np.abs(z_mean)
         # topo_interface = -1.0*topo_interface
         
-        ax.contourf(xx,
-                    zz,
-                    Rhoi,
-                    # levels = [200., 2750, 2900, 3365, 3900],
-                    # colors = [color_uc, color_lc, color_lit, color_ast]
-                    levels=[200.,
-                            2350,
-                            2450,
-                            2750,
-                            2900,
-                            3325,
-                            3355,
-                            3365,
-                            3378],
-                    colors=[color_sed,
-                            color_dec,
-                            color_uc,
-                            color_lc,
-                            color_lit,
-                            color_mlit_uc,
-                            color_mlit_lc,
-                            color_ast])
+        if(sediments == True):
+            ax.contourf(xx,
+                        zz,
+                        Rhoi,
+                        levels=[200.,
+                                2350,
+                                2450,
+                                2750,
+                                2900,
+                                3325,
+                                3355,
+                                3365,
+                                3378],
+                        colors=[color_sed,
+                                color_dec,
+                                color_uc,
+                                color_lc,
+                                color_lit,
+                                color_mlit_uc,
+                                color_mlit_lc,
+                                color_ast])
+        else:
+            ax.contourf(xx,
+                        zz,
+                        Rhoi,
+                        levels = [200., 2750, 2900, 3365, 3900],
+                        colors = [color_uc, color_lc, color_lit, color_ast])
 
         im=ax.imshow(data.T,
                      cmap = 'Greys',
