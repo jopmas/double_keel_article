@@ -6,7 +6,7 @@ from scipy.interpolate import interp1d
 from scipy.interpolate import interp2d
 from matplotlib.pyplot import cycler
 from matplotlib.colors import LinearSegmentedColormap, ListedColormap
-
+from matplotlib.patches import Patch
 import xarray as xr
 
 path = os.getcwd().split('/')
@@ -199,6 +199,8 @@ thickness_mlit_crat_bot = 125 * 1.0e3
 thickness_litho = thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickness_mlit #125 km - reference is the non-cratonic lithosphere
 thickness_crat_up = thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickness_mlit_crat_up
 thickness_crat_bot = thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickness_mlit_crat_up + thickness_mlit_crat_bot
+thickness_astnc = Lz - (thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickness_mlit)
+thickness_astc = Lz - (thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust + thickness_mlit_crat_up + thickness_mlit_crat_bot)
 
 # seed depth bellow base of lower crust (m)
 seed_depth = 3 * 1.0e3 #9 * 1.0e3 #original
@@ -256,28 +258,6 @@ n_seed = 6
 interfaces["seed_base"][int(Nx * x_seed // Lx - n_seed // 2) : int(Nx * x_seed // Lx + n_seed // 2)] = thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust - seed_depth + thickness_seed // 2
 
 interfaces["seed_top"][int(Nx * x_seed // Lx - n_seed // 2) : int(Nx * x_seed // Lx + n_seed // 2)] = thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust - seed_depth - thickness_seed // 2
-
-#plottin interfaces
-
-fig, ax = plt.subplots(figsize=(10, 5), constrained_layout=True)
-
-for label, layer in interfaces.items():
-    # print(label, "(size): ", np.size(layer))
-    ax.plot(x/1.0E3, (-layer + thickness_sa)/1.0E3, label=f"{label}")
-
-
-ax.set_xlabel("x [km]", fontsize=label_size)
-ax.set_ylabel("Depth [km]", fontsize=label_size)
-
-ax.set_yticks(np.arange(-Lz / 1e3, 1 / 1e3, 50))
-ax.set_xlim([0, Lx/1000])
-ax.set_ylim([(-Lz + thickness_sa) / 1e3, 0 + thickness_sa / 1e3])
-
-ax.legend(loc='lower center', ncol=5)
-ax.grid("-k", alpha=0.6)
-
-figname = "interfaces_teste"
-fig.savefig(f"{figname}.png", dpi=200)
 
 ##############################################################################
 #Rheological and Thermal parameters
@@ -420,6 +400,7 @@ sp_surface_processes             = False
 
 velocity_from_ascii              = True
 # velocity_from_ascii              = False
+velocity = 1.0 #cm/yr
 if(velocity_from_ascii == True):
     variable_bcv                     = True
 else:
@@ -696,59 +677,6 @@ if(preset == False):
 else:
     print("Need to implement!")
 
-#plot initial temperature field and profile
-
-fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2, constrained_layout=True, figsize=(20, 8), sharey=True)
-
-if(crameri_colors):
-    cmap=cr.imola
-else:
-    cmap="viridis"
-
-im = ax0.contourf(X / 1.0e3, (Z - thickness_sa) / 1.0e3, T, cmap=cmap,
-                  levels=np.arange(0, np.max(T) + 100, 100))
-
-idx_center = int((Nx-1)/2)
-ax1.plot(T[:, 0], (z - thickness_sa) / 1.0e3, "--k", label=r'T$_{\mathrm{cratonic}}$')
-ax1.plot(T[:, idx_center], (z - thickness_sa) / 1.0e3, "--r", label=r'T$_{\mathrm{non-cratonic}}$')
-
-ax_aux = ax1.twiny()
-
-for label, layer in interfaces.items():
-    # print(label, "(size): ", np.size(layer))
-    # ax1.plot(x/1.0E3, (-layer + thickness_sa)/1.0E3, label=f"{label}")
-    ax0.plot(x/1.0E3, (layer - thickness_sa)/1.0E3, color='xkcd:white')
-    ax_aux.plot(x/1.0E3, (layer - thickness_sa)/1.0E3, label=label, lw=2)
-
-T_xlim = 2000 #oC
-
-ax0.set_ylim((Lz - thickness_sa) / 1.0e3, -thickness_sa / 1000)
-ax0.set_xlabel("km", fontsize=label_size)
-ax0.set_ylabel("km", fontsize=label_size)
-
-
-ax1.set_xlabel("$^\circ$C", fontsize=label_size)
-cbar = fig.colorbar(im, orientation='vertical', ax=ax0)
-cbar.set_label("Temperature [°C]")
-
-ax1.tick_params(top=True, labeltop=True, bottom=False, labelbottom=False)
-ax1.xaxis.set_label_position('top')
-ax1.set_ylim((Lz - thickness_sa) / 1.0e3, -thickness_sa / 1000)
-ax1.set_xlim(0, T_xlim)
-ax0.grid(':k', alpha=0.7)
-ax1.grid(':k', alpha=0.7)
-
-ax_aux.tick_params(top=False, labeltop=False, bottom=True, labelbottom=True)
-ax_aux.xaxis.set_label_position('bottom')
-ax_aux.set_xlabel('km', fontsize=label_size)
-ax_aux.set_xlim(0, Lx/1000)
-ax_aux.set_ylim((Lz - thickness_sa) / 1.0e3, -thickness_sa / 1000)
-
-ax1.legend(loc='upper center', fontsize=14, ncol=2)
-ax_aux.legend(loc='lower center', fontsize=12, ncol=5, handletextpad=0.2, handlelength=.8)
-
-plt.savefig("initial_temperature_field.png")
-
 ##############################################################################
 # Boundary condition - velocity
 ##############################################################################
@@ -756,13 +684,7 @@ if(velocity_from_ascii == True):
     fac_air = 10.0e3
 
     # 1 cm/year
-    vL = 0.005 / (365 * 24 * 3600)  # m/s
-
-    # 0.5 cm/year
-    # vL = 0.0025 / (365 * 24 * 3600)  # m/s
-    
-    # 0.25 cm/year
-    # vL = 0.00125 / (365 * 24 * 3600)  # m/s
+    vL = (0.5*velocity/100) / (365 * 24 * 3600)  # m/s
 
     h_v_const = thickness_crat_bot + 20.0e3  #thickness with constant velocity 
     ha = Lz - thickness_sa - h_v_const  # difference
@@ -820,48 +742,6 @@ if(velocity_from_ascii == True):
     # Create the initial velocity file
     np.savetxt("input_velocity_0.txt", v, header="v1\nv2\nv3\nv4")
 
-    # Plot veolocity
-    ##############################################################################
-    plt.close()
-    fig, (ax0, ax1) = plt.subplots(nrows=1, ncols=2, figsize=(9, 9), constrained_layout=True, sharey=True)
-
-    ax0.plot(VX[:, 0]*1e10, (z - thickness_sa) / 1000, "k-", label="left side")
-    ax1.plot(VZ[:, 0]*1e10, (z - thickness_sa) / 1000, "k-", label="left side")
-
-    ax0.plot(VX[:, -1]*1e10, (z - thickness_sa) / 1000, "r-", label="right side")
-    ax1.plot(VZ[:, -1]*1e10, (z - thickness_sa) / 1000, "r-", label="right side")
-
-    ax0.legend(loc='upper left', fontsize=14)
-    ax1.legend(loc='upper right', fontsize=14)
-
-    ax0_xlim = ax0.get_xlim()
-    ax1_xlim = ax1.get_xlim()
-
-    ax0.set_yticks(np.arange(0, Lz / 1000, 40))
-    ax1.set_yticks(np.arange(0, Lz / 1000, 40))
-
-    ax0.set_ylim([Lz / 1000 - thickness_sa / 1000, -thickness_sa / 1000])
-    ax1.set_ylim([Lz / 1000 - thickness_sa / 1000, -thickness_sa / 1000])
-
-    ax0.set_xlim([-8, 8])
-    ax1.set_xlim([-8, 8])
-    ax0.set_xticks(np.arange(-8, 9, 4))
-    ax1.set_xticks(np.arange(-8, 9, 4))
-    ax0.grid(':k', alpha=0.7)
-    ax1.grid(':k', alpha=0.7)
-
-    ax0.set_xlabel("$10^{-10}$ (m/s)", fontsize=label_size)
-    ax1.set_xlabel("$10^{-10}$ (m/s)", fontsize=label_size)
-    ax0.set_ylabel("Depth (km)", fontsize=label_size)
-
-    ax0.set_title("Horizontal component of velocity")
-
-    ax1.set_title("Vertical component of velocity")
-
-    plt.savefig("velocity.png")
-    plt.close()
-
-
     if(variable_bcv == True):
         var_bcv = f""" 4
                     {ti_convergence} -1.0
@@ -904,18 +784,417 @@ if(sp_surface_processes == True):
         # prec = 0.0008*np.exp(-(x-Lx/2)**6/(Lx/(8*2))**6) #100 km
         # prec = 0.0008*np.exp(-(x-Lx/2)**6/(Lx/(8*4))**6) #50 km
 
-        plt.figure(figsize=(12, 9), constrained_layout=True)
-        plt.xlim([0, Lx/1.0E3])
-        plt.ylim([0, np.max(prec)])
-        plt.xlabel("km", fontsize=label_size)
-        plt.ylabel("Precipitation", fontsize=label_size)
-        plt.plot(x/1000,prec)
-        plt.grid(':k', alpha=0.7)
+        # plt.figure(figsize=(12, 9), constrained_layout=True)
+        # plt.xlim([0, Lx/1.0E3])
+        # plt.ylim([0, np.max(prec)])
+        # plt.xlabel("km", fontsize=label_size)
+        # plt.ylabel("Precipitation", fontsize=label_size)
+        # plt.plot(x/1000,prec)
+        # plt.grid(':k', alpha=0.7)
 
-        figname='precipitation_profile.png'
-        plt.savefig(figname, dpi=300)
+        # figname='precipitation_profile.png'
+        # plt.savefig(figname, dpi=300)
 
         np.savetxt("precipitation.txt", prec, fmt="%.8f")
+
+
+##############################################################################
+#
+# Creating a single plot with scenario infos
+#
+##############################################################################
+
+plt.close()
+fig, axs = plt.subplots(1, 1, figsize = (14, 6))
+ylimplot = [-Lz/1000+thickness_sa/1000, 0+thickness_sa/1000]
+#plot scenario layers
+#layers colour scheme
+cr = 255.
+color_air = "xkcd:white"
+color_sed = (241./cr,184./cr,68./cr)
+color_dec = (137./cr,81./cr,151./cr)
+color_uc = (228./cr,156./cr,124./cr)
+color_lc = (240./cr,209./cr,188./cr)
+color_lit = (155./cr,194./cr,155./cr)
+color_mlit_uc = (180. / cr, 194. / cr, 162. / cr)
+color_mlit_lc = (180. / cr, 194. / cr, 162. / cr)#(155. / cr, 194. / cr, 155. / cr)
+color_ast = (207./cr,226./cr,205./cr)
+
+colors = {'air': color_sed,
+    'sediments': color_dec,
+    'decolement':color_uc,
+    'upper_crust': color_lc,
+    'seed_top': color_lc,
+    'seed_base': color_lc,
+    'lower_crust': color_lit,
+    'litho_nc': color_mlit_uc,
+    'litho_crat_up': color_mlit_lc,
+    'litho_crat_bot': color_ast,
+}
+
+for interface in list(interfaces.items())[::-1]:
+    label, layer = interface[0], interface[1]
+    axs.plot(x/1000, (-layer)/1000+thickness_sa/1000, color='k', lw=1)
+    if(label == 'seed_top' or label == 'seed_base'):
+        label = 'lower_crust'
+        continue
+    if(label == 'litho_crat_up'):
+        continue
+
+    axs.fill_between(x/1000, -layer/1000+thickness_sa/1000, -Lz/1000+thickness_sa/1000, color=colors[label])#, label=labels[label])
+
+axs.set_xlim(0, Lx/1000)
+axs.set_xticks([])
+axs.set_yticks([])
+axs.set_ylim(ylimplot)
+axs.set_xlabel(f"Lx = {Lx/1000:.0f} km; dx = {dx/1000:.0f} km", fontsize=16)
+axs.set_ylabel(f"Lz = {Lz/1000:.0f} km; dz = {dz/1000:.0f} km", fontsize=16)
+
+#plotting ghost points to create a legend to the layers
+colors_legend = {'air': color_air,
+                 'sediments': color_sed,
+                 'decolement':color_dec,
+                 'upper_crust': color_uc,
+                 'seed_top': color_lc,
+                 'seed_base': color_lc,
+                 'lower_crust': color_lc,
+                 'litho_nc': color_lit,
+                 'litho_crat_up': color_mlit_uc,
+                 'litho_crat_bot': color_mlit_lc,
+                 'asthenosphere': color_ast,}
+
+labels_legend = {
+    'air': f"Sticky air\n{C_air:.0f} x air\n"+fr"$\rho$ = {rho_air:.0f} kg/m³"+f"\n$h$={thickness_sa/1.0E3:.0f} km",
+    'sediments': f"Sediments\n{C_sed:.0f} x wet quartz\n"+fr"$\rho$ = {rho_sed:.0f} kg/m³"+f"\nh={thickness_sed/1.0E3:.0f} km",
+    'decolement': f"Decolement\n{C_dec:.1f} x wet quartz\n"+fr"$\rho$ = {rho_dec:.0f} kg/m³"+f"\nh={thickness_decolement/1.0E3:.0f} km",
+    'upper_crust': f"Upper crust\n{C_upper_crust:.0f} x wet quartz\n"+fr"$\rho$ = {rho_upper_crust:.0f} kg/m³"+f"\nh={thickness_upper_crust/1.0E3:.0f} km",
+    'lower_crust': f"Lower crust\n{C_lower_crust:.0f} x wet quartz\n"+fr"$\rho$ = {rho_lower_crust:.0f} kg/m³"+f"\nh={thickness_lower_crust/1.0E3:.0f} km",
+    'litho_nc': f"Non-cratonic\nlith. mantle\n{C_mlit:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit:.0f} kg/m³"+f"\nh={thickness_mlit/1.0E3:.0f} km",
+    'litho_crat_up': f"Upper cratonic\nlith. mantle\n{C_mlit_uc:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit_uc:.0f} kg/m³"+f"\nh={thickness_mlit_crat_up/1.0E3:.0f} km",
+    'litho_crat_bot': f"Lower cratonic\nlith. mantle\n{C_mlit_lc:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit_lc:.0f} kg/m³"+f"\nh={thickness_mlit_crat_bot/1.0E3:.0f} km",
+    'asthenosphere': f"Asthenosphere\n{C_ast:.0f} x wet olivine\n"+fr"$\rho$ = {rho_ast:.0f} kg/m³"+f"\nh={thickness_astnc/1.0E3:.0f}-{thickness_astc/1.0E3:.0f} km"}
+
+legend_elements = []
+for key in labels_legend.keys():
+    legend_elements.append(Patch(facecolor=colors_legend[key], edgecolor='black', label=labels_legend[key]))
+
+fig.subplots_adjust(bottom=0.25)
+
+leg = axs.legend(handles=legend_elements,
+    ncol=len(legend_elements), 
+    loc='lower center', 
+    bbox_to_anchor=(0.5, -0.35), 
+    frameon=False,
+    title='Layers properties',
+    title_fontsize=15,
+    fontsize=8,
+    columnspacing=1.0,
+)
+
+#Indicating weak seed position
+xpos_seed = x_seed/Lx
+correction = 0.94
+ypos_seed = correction*(1-(thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)/Lz)
+axs.text(xpos_seed, ypos_seed, f'weak seed\n{thickness_seed/1000:.0f}x{thickness_seed/1000:.0f} km²', color='k', fontsize=12, ha='center', va='center', transform=axs.transAxes)
+
+#Temperature profiles
+idx_center = int((Nx-1)/2) 
+axt = axs.inset_axes((0.205,
+                      0,
+                      0.18,
+                      1))
+# axt.plot(temp_z[:, 0], -(z - t_sa) / 1.0e3, "-r")
+axt.plot(T[:, 0], (-z + thickness_sa) / 1.0e3, "-k", label=f"Cratonic")#label=r'T$_{\mathrm{cratonic}}$')
+axt.plot(T[:, idx_center], (-z + thickness_sa) / 1.0e3, "-r",label=f"Non-cratonic")# label=r'T$_{\mathrm{non-cratonic}}$')
+axt.grid(visible=True, axis='x',which='both',ls='--',color='red',alpha=0.3)
+axt.set_ylim(ylimplot)
+axt.set_yticks([])
+axt.set_xticks(np.linspace(0,1800,7))
+axt.patch.set_alpha(0)
+axt.xaxis.set_ticks_position('top')
+axt.set_yticks([])
+axt.tick_params(labelsize=8)
+axt.xaxis.label.set_color('red')
+axt.tick_params(axis='x', colors='k')
+axt.spines['left'].set_visible(False)
+axt.spines['right'].set_visible(False)
+axt.set_title('Temp °C',color='k')
+axt.legend(loc='lower left', fontsize=10, framealpha=0.9)
+#axt.spines['bottom'].set_visible(False)
+
+################################
+#    Yield Strength Envelope   #
+################################
+
+Qnc = np.zeros_like(z)
+Anc = np.zeros_like(z)
+nnc = np.zeros_like(z)
+Vnc = np.zeros_like(z)
+Cnc = np.zeros_like(z)
+rhonc = np.zeros_like(z)
+
+Qc = np.zeros_like(z)
+Ac = np.zeros_like(z)
+nc = np.zeros_like(z)
+Vc = np.zeros_like(z)
+Cc = np.zeros_like(z)
+rhoc = np.zeros_like(z)
+
+zaux = z
+air = zaux < thickness_sa
+sed = (zaux>thickness_sa) & (zaux<thickness_sa+thickness_sed)
+dec = (zaux>thickness_sa+thickness_sed) & (zaux<thickness_sa+thickness_sed+thickness_decolement)
+uc =  (zaux>=thickness_sa+thickness_sed+thickness_decolement) & (zaux<thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust)
+lc =  (zaux>=thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust) & (zaux<thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust)
+lm =  (zaux>=thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust) & (zaux<=thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust+thickness_mlit)
+#upper craton
+luc = (zaux>=thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust) & (zaux<=thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust+thickness_mlit_crat_up)
+#lower craton
+llc = (zaux>=thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust+thickness_mlit_crat_up) & (zaux<=thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust+thickness_mlit_crat_up+thickness_mlit_crat_bot)
+#bellow non-cratonic
+astnc = zaux>thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust+thickness_mlit
+#bellow craton
+astc = zaux>thickness_sa+thickness_sed+thickness_decolement+thickness_upper_crust+thickness_lower_crust+thickness_mlit_crat_up+thickness_mlit_crat_bot
+
+#non cratonic rheological properties
+Cnc[air] = C_air
+Cnc[sed] = C_sed
+Cnc[dec] = C_dec
+Cnc[uc] = C_upper_crust
+Cnc[lc] = C_lower_crust
+Cnc[lm] = C_mlit
+Cnc[astnc] = C_ast
+
+rhonc[air] = rho_air
+rhonc[sed] = rho_sed
+rhonc[dec] = rho_dec
+rhonc[uc] = rho_upper_crust
+rhonc[lc] = rho_lower_crust
+rhonc[lm] = rho_mlit
+rhonc[astnc] = rho_ast
+
+Anc[air] = A_air
+Anc[sed] = A_sed
+Anc[dec] = A_dec
+Anc[uc] = A_upper_crust
+Anc[lc] = A_lower_crust
+Anc[lm] = A_mlit
+Anc[astnc] = A_ast
+
+nnc[air] = n_air
+nnc[sed] = n_sed
+nnc[dec] = n_dec
+nnc[uc] = n_upper_crust
+nnc[lc] = n_lower_crust
+nnc[lm] = n_mlit
+nnc[astnc] = n_ast
+
+Qnc[air] = Q_air
+Qnc[sed] = Q_sed
+Qnc[dec] = Q_dec
+Qnc[uc] = Q_upper_crust
+Qnc[lc] = Q_lower_crust
+Qnc[lm] = Q_mlit
+Qnc[astnc] = Q_ast
+
+Vnc[air] = V_air
+Vnc[sed] = V_sed
+Vnc[dec] = V_dec
+Vnc[uc] = V_upper_crust
+Vnc[lc] = V_lower_crust
+Vnc[lm] = V_mlit
+Vnc[astnc] = V_ast
+
+#cratonic rheological properties
+Cc[air] = C_air
+Cc[sed] = C_sed
+Cc[dec] = C_dec
+Cc[uc] = C_upper_crust
+Cc[lc] = C_lower_crust
+Cc[luc] = C_mlit_uc
+Cc[llc] = C_mlit_lc
+Cc[astc] = C_ast
+
+rhoc[air] = rho_air
+rhoc[sed] = rho_sed
+rhoc[dec] = rho_dec
+rhoc[uc] = rho_upper_crust
+rhoc[lc] = rho_lower_crust
+rhoc[luc] = rho_mlit_uc
+rhoc[llc] = rho_mlit_lc
+rhoc[astc] = rho_ast
+
+Ac[air] = A_air
+Ac[sed] = A_sed
+Ac[dec] = A_dec
+Ac[uc] = A_upper_crust
+Ac[lc] = A_lower_crust
+Ac[luc] = A_mlit_uc
+Ac[llc] = A_mlit_lc
+Ac[astc] = A_ast
+
+nc[air] = n_air
+nc[sed] = n_sed
+nc[dec] = n_dec
+nc[uc] = n_upper_crust
+nc[lc] = n_lower_crust
+nc[luc] = n_mlit_uc
+nc[llc] = n_mlit_lc
+nc[astc] = n_ast
+
+Qc[air] = Q_air
+Qc[sed] = Q_sed
+Qc[dec] = Q_dec
+Qc[uc] = Q_upper_crust
+Qc[lc] = Q_lower_crust
+Qc[luc] = Q_mlit_uc
+Qc[llc] = Q_mlit_lc
+Qc[astc] = Q_ast
+
+Vc[air] = V_air
+Vc[sed] = V_sed
+Vc[dec] = V_dec
+Vc[uc] = V_upper_crust
+Vc[lc] = V_lower_crust
+Vc[luc] = V_mlit_uc
+Vc[llc] = V_mlit_lc
+Vc[astc] = V_ast
+
+sr = 1.0E-15 #strain rate - s-1
+# sr = 1.0E-14
+R = 8.314 #gas constant - J K−1 mol−1
+g = 10.0
+
+Pnc = rhonc[::-1].cumsum()[::-1]*g*dz
+Pc = rhoc[::-1].cumsum()[::-1]*g*dz
+
+phi = 2.0*np.pi/180.0
+c0 = 4.0E6
+
+sigmanc_min = c0 * np.cos(phi) + Pnc * np.sin(phi)
+sigmac_min = c0 * np.cos(phi) + Pc * np.sin(phi)
+
+phi = 15.0*np.pi/180.0
+c0 = 20.0E6
+sigmanc_max = c0 * np.cos(phi) + Pnc * np.sin(phi)
+sigmac_max = c0 * np.cos(phi) + Pc * np.sin(phi)
+
+TKnc = T[:, idx_center] + 273
+TKc = T[:, 0] + 273
+
+viscnc = Cnc * Anc**(-1./nnc) * sr**((1.0-nnc)/nnc)*np.exp((Qnc + Vnc*Pnc)/(nnc*R*TKnc))
+sigmanc_v = viscnc * sr
+condnc = sigmanc_v>sigmanc_max
+sigmanc_v[condnc]=sigmanc_max[condnc]
+
+viscc = Cc * Ac**(-1./nc) * sr**((1.0-nc)/nc)*np.exp((Qc + Vc*Pc)/(nc*R*TKc))
+sigmac_v = viscc * sr
+condc = sigmac_v>sigmac_max
+sigmac_v[condc]=sigmac_max[condc]
+
+axsg = axs.inset_axes((0.605,
+                       0,
+                       0.13,
+                       1))
+
+axsg.plot(sigmanc_v/1e9,-(z-thickness_sa)/1e3,'r', label=f'Non-cratonic')
+# axsg.plot(sigmanc_min/1e9,-(z-t_sa)/1e3,'k--',lw=0.8)
+axsg.plot(sigmac_v/1e9,-(z-thickness_sa)/1e3,'k', label=f'Cratonic')
+
+
+axsg.grid(visible=True, axis='x',which='both',ls='--',color='gray',alpha=0.8)
+axsg.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+axsg.set_xlim(-0.1,1.1)
+axsg.set_ylim(ylimplot)
+axsg.set_yticks([])
+axsg.patch.set_alpha(0)
+axsg.xaxis.set_ticks_position('top')
+axsg.spines['left'].set_visible(False)
+axsg.spines['right'].set_visible(False)
+axsg.set_title('$\sigma_{YSE}$ (GPa)')
+axsg.tick_params(labelsize=8)
+
+#Effective friction angle
+axsf = axs.inset_axes((0.800,
+                       0,
+                       0.10,
+                       0.30))
+axsf.patch.set_alpha(0)
+
+# xdata = np.array([0, 0.05, 1.05, 1.1])
+xdata = np.array([0, 0.25, 0.75, 1.0])
+ydata = np.array([15, 15, 2, 2])
+
+fisize = 10
+axsf.plot(xdata, ydata, 'k-')
+axsf.set_xlim([0.10, 0.9])
+axsf.set_ylim([0, 17])
+axsf.set_xticks([0.25, 0.5, 0.75])
+axsf.set_xticklabels([0.05, ' ', 1.05])
+axsf.tick_params('x', top=True, labeltop=False)
+axsf.xaxis.set_ticks_position('bottom')
+axsf.set_xlabel(r"$\varepsilon$", fontsize=fisize)
+
+axsf.set_yticks([2, 15])
+axsf.set_yticklabels(['2°', '15°'])
+axsf.set_ylabel('$\Phi_{\mathrm{eff}}$', fontsize=fisize)
+axsf.tick_params(labelsize=fisize)
+
+axsfC = axsf.twinx()
+axsfC.set_ylim([0, 17])
+axsfC.set_yticks([2, 15])
+axsfC.set_yticklabels([4, 20])
+axsfC.set_ylabel('Cohesion (MPa)', fontsize=fisize, rotation=90)
+axsfC.tick_params(labelsize=fisize)
+
+#plot velocity bc
+if(velocity_from_ascii == True):
+    #Velocity = Right side
+    vr_plot = np.round(max(abs(VX[:, -1]* (100.0*365.0 * 24.0 * 3600.0))),0)
+    fac = 0.96
+    axr = axs.inset_axes((fac,
+                         0,
+                         (1-fac)*2,
+                         1))
+
+    scale_veloc = 100.0*365.0*24.0*3600.0
+    crt=0
+
+    #Right side velocity arrows
+    axr.fill_betweenx((-z + thickness_sa) / 1.0e3, VX[:, -1]* (100.0*365.0 * 24.0 * 3600.0), 0, color=None, facecolor=None, hatch='---',alpha=0)
+    axr.set_ylim(ylimplot)
+    axr.set_yticks([])
+    axr.patch.set_alpha(0)
+    axr.set_title('cm/y')
+    axr.xaxis.set_ticks_position('top')
+    axr.tick_params(labelsize=8)
+    axr.set_xlim([-vr_plot, vr_plot])
+    axr.spines['left'].set_visible(False)
+    axr.spines['right'].set_visible(False)
+    axr.spines['bottom'].set_visible(False)
+
+    # Left side velocity arrows
+    vl_plot = np.round(max(abs(VX[:, 0]* (100*365.0 * 24.0 * 3600.0))),0)
+    axl = axs.inset_axes((0,
+                          0,
+                          (1-fac)*2,
+                          1))
+    
+    axl.fill_betweenx((-z + thickness_sa) / 1.0e3, VX[:, 0]* (100*365 * 24 * 3600), 0, color=None, facecolor=None, hatch='---',alpha=0)
+
+    axl.set_ylim(-Lz/1000+thickness_sa/1000, 0+thickness_sa/1000)
+    axl.set_yticks([])
+    axl.patch.set_alpha(0)
+    axl.set_title('cm/y')
+    axl.xaxis.set_ticks_position('top')
+    axl.set_xlim([0, vl_plot])
+    axl.tick_params(labelsize=8)
+    axl.spines['left'].set_visible(False)
+    axl.spines['right'].set_visible(False)
+
+figname = 'numerical_setup'
+fig.savefig(f"{figname}.png", bbox_inches="tight", dpi=300)
+plt.close()
 
 ##############################################################################
 # Scenario infos
