@@ -34,7 +34,7 @@ datasets = (#Properties from mandyoc. Comment/uncomment to select properties of 
             'strain_rate', ### Read ascii outputs and save them as xarray.Datasets,
             'temperature',
             'viscosity',
-            # 'surface',
+            'surface',
             )
 
 ds_data = read_mandyoc_output(

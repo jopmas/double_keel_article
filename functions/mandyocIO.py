@@ -6,6 +6,7 @@ import os
 import gc
 import numpy as np
 import xarray as xr
+xr.set_options(use_new_combine_kwarg_defaults=True)
 from scipy.interpolate import interp1d
 
 from matplotlib import rc

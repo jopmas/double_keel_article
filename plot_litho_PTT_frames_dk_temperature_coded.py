@@ -579,10 +579,10 @@ with pymp.Parallel() as p:
                 if((plot_lower_crust_particles == True) & ((particle_layer == lower_crust1_code) | (particle_layer == lower_crust2_code))):
                     plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, P_max, particle,
                                                             markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                                                            color_wedge = 'xkcd:orange', #orogenic wedge rocks 400<T<900 and P<2GPa
-                                                            color_mid_T = 'xkcd:teal', #subducted crustal rocks 400<T<900 and P>2GPa
-                                                            color_high_T_wedge = 'xkcd:raspberry', #orogenic wedge rocks T>=900 and P<2GPa
-                                                            color_high_T_subducted = 'xkcd:dirty purple', #subducted crustal rocks T>900 and P>2GPa
+                                                            color_wedge=color_wedge, #orogenic wedge rocks 400<T<900 and P<2GPa
+                                                            color_mid_T=color_mid_T, #subducted crustal rocks 400<T<900 and P>2GPa
+                                                            color_high_T_wedge=color_high_T_wedge, #orogenic wedge rocks T>=900 and P<2GPa
+                                                            color_high_T_subducted=color_high_T_subducted, #subducted crustal rocks T>900 and P>2GPa
                                                             plot_steps=False)
                     
                 # if((plot_upper_crust_particles == True) & (particle_layer == upper_crust_code)):
@@ -655,9 +655,11 @@ with pymp.Parallel() as p:
             # axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Intermediate temperature', zorder=60)
             # axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T, markersize=markersize, label='Higher temperature', zorder=60)
 
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Intermediate temperature', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_wedge, markersize=markersize, label='Wedge material (HT)', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_subducted, markersize=markersize, label='Subducted material (HT)', zorder=60)
+            axs[1].set_xlabel(r'Temperature [$^{\circ}$C]', fontsize=fsize)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_wedge, markersize=markersize, label='Wedge LT', zorder=60)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Subducted LT', zorder=60)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_wedge, markersize=markersize, label='Wedge HT', zorder=60)
+            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_subducted, markersize=markersize, label='Subducted HT', zorder=60)
 
             axs[1].legend(loc='upper left', ncol=1, fontsize=8, handlelength=0, handletextpad=0, labelcolor='linecolor')
 
