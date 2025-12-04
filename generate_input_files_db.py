@@ -803,7 +803,6 @@ if(sp_surface_processes == True):
 # Creating a single plot with scenario infos
 #
 ##############################################################################
-
 plt.close()
 fig, axs = plt.subplots(1, 1, figsize = (14, 6))
 ylimplot = [-Lz/1000+thickness_sa/1000, 0+thickness_sa/1000]
@@ -820,6 +819,7 @@ color_mlit_uc = (180. / cr, 194. / cr, 162. / cr)
 color_mlit_lc = (180. / cr, 194. / cr, 162. / cr)#(155. / cr, 194. / cr, 155. / cr)
 color_ast = (207./cr,226./cr,205./cr)
 
+
 colors = {'air': color_sed,
     'sediments': color_dec,
     'decolement':color_uc,
@@ -834,7 +834,9 @@ colors = {'air': color_sed,
 
 for interface in list(interfaces.items())[::-1]:
     label, layer = interface[0], interface[1]
-    axs.plot(x/1000, (-layer)/1000+thickness_sa/1000, color='k', lw=1)
+    if(label=='seed_top'):
+        axs.plot(x_seed/1000, -(thickness_upper_crust + thickness_lower_crust - seed_depth)/1000, 'x', color='k', lw=1.0)
+
     if(label == 'seed_top' or label == 'seed_base'):
         label = 'lower_crust'
         continue
@@ -847,8 +849,8 @@ axs.set_xlim(0, Lx/1000)
 axs.set_xticks([])
 axs.set_yticks([])
 axs.set_ylim(ylimplot)
-axs.set_xlabel(f"Lx = {Lx/1000:.0f} km; dx = {dx/1000:.0f} km", fontsize=16)
-axs.set_ylabel(f"Lz = {Lz/1000:.0f} km; dz = {dz/1000:.0f} km", fontsize=16)
+axs.set_xlabel(f"Distance = {Lx/1000:.0f} km\nResolution = {dx/1000:.0f} km", fontsize=16)
+axs.set_ylabel(f"Depth = {Lz/1000:.0f} km\nResolution = {dz/1000:.0f} km", fontsize=16)
 
 #plotting ghost points to create a legend to the layers
 colors_legend = {'air': color_air,
@@ -860,8 +862,9 @@ colors_legend = {'air': color_air,
                  'lower_crust': color_lc,
                  'litho_nc': color_lit,
                  'litho_crat_up': color_mlit_uc,
-                 'litho_crat_bot': color_mlit_lc,
+                #  'litho_crat_bot': color_mlit_lc,
                  'asthenosphere': color_ast,}
+
 
 labels_legend = {
     'air': f"Sticky air\n{C_air:.0f} x air\n"+fr"$\rho$ = {rho_air:.0f} kg/m³"+f"\n$h$={thickness_sa/1.0E3:.0f} km",
@@ -870,9 +873,11 @@ labels_legend = {
     'upper_crust': f"Upper crust\n{C_upper_crust:.0f} x wet quartz\n"+fr"$\rho$ = {rho_upper_crust:.0f} kg/m³"+f"\nh={thickness_upper_crust/1.0E3:.0f} km",
     'lower_crust': f"Lower crust\n{C_lower_crust:.0f} x wet quartz\n"+fr"$\rho$ = {rho_lower_crust:.0f} kg/m³"+f"\nh={thickness_lower_crust/1.0E3:.0f} km",
     'litho_nc': f"Non-cratonic\nlith. mantle\n{C_mlit:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit:.0f} kg/m³"+f"\nh={thickness_mlit/1.0E3:.0f} km",
-    'litho_crat_up': f"Upper cratonic\nlith. mantle\n{C_mlit_uc:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit_uc:.0f} kg/m³"+f"\nh={thickness_mlit_crat_up/1.0E3:.0f} km",
-    'litho_crat_bot': f"Lower cratonic\nlith. mantle\n{C_mlit_lc:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit_lc:.0f} kg/m³"+f"\nh={thickness_mlit_crat_bot/1.0E3:.0f} km",
-    'asthenosphere': f"Asthenosphere\n{C_ast:.0f} x wet olivine\n"+fr"$\rho$ = {rho_ast:.0f} kg/m³"+f"\nh={thickness_astnc/1.0E3:.0f}-{thickness_astc/1.0E3:.0f} km"}
+    'litho_crat_up': f"Cratonic\nlith. mantle\n{C_mlit_uc:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit_uc:.0f} kg/m³"+f"\nh={thickness_mlit_crat_up/1.0E3:.0f} km",
+    # 'litho_crat_up': f"Upper cratonic\nlith. mantle\n{C_mlit_uc:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit_uc:.0f} kg/m³"+f"\nh={thickness_mlit_crat_up/1.0E3:.0f} km",
+    # 'litho_crat_bot': f"Lower cratonic\nlith. mantle\n{C_mlit_lc:.0f} x dry olivine\n"+fr"$\rho$ = {rho_mlit_lc:.0f} kg/m³"+f"\nh={thickness_mlit_crat_bot/1.0E3:.0f} km",
+    'asthenosphere': f"Asthenosphere\n{C_ast:.0f} x wet olivine\n"+fr"$\rho$ = {rho_ast:.0f} kg/m³"+f"\nh={thickness_astnc/1.0E3:.0f}-{thickness_astc/1.0E3:.0f} km"
+    }
 
 legend_elements = []
 for key in labels_legend.keys():
@@ -883,7 +888,7 @@ fig.subplots_adjust(bottom=0.25)
 leg = axs.legend(handles=legend_elements,
     ncol=len(legend_elements), 
     loc='lower center', 
-    bbox_to_anchor=(0.5, -0.35), 
+    bbox_to_anchor=(0.5, -0.45), 
     frameon=False,
     title='Layers properties',
     title_fontsize=15,
@@ -894,8 +899,11 @@ leg = axs.legend(handles=legend_elements,
 #Indicating weak seed position
 xpos_seed = x_seed/Lx
 correction = 0.94
+
 ypos_seed = correction*(1-(thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)/Lz)
+
 axs.text(xpos_seed, ypos_seed, f'weak seed\n{thickness_seed/1000:.0f}x{thickness_seed/1000:.0f} km²', color='k', fontsize=12, ha='center', va='center', transform=axs.transAxes)
+
 
 #Temperature profiles
 idx_center = int((Nx-1)/2) 
@@ -918,7 +926,7 @@ axt.xaxis.label.set_color('red')
 axt.tick_params(axis='x', colors='k')
 axt.spines['left'].set_visible(False)
 axt.spines['right'].set_visible(False)
-axt.set_title('Temp °C',color='k')
+axt.set_title('Temperature [°C]',color='k')
 axt.legend(loc='lower left', fontsize=10, framealpha=0.9)
 #axt.spines['bottom'].set_visible(False)
 
@@ -941,6 +949,7 @@ Cc = np.zeros_like(z)
 rhoc = np.zeros_like(z)
 
 zaux = z
+
 air = zaux < thickness_sa
 sed = (zaux>thickness_sa) & (zaux<thickness_sa+thickness_sed)
 dec = (zaux>thickness_sa+thickness_sed) & (zaux<thickness_sa+thickness_sed+thickness_decolement)
@@ -1098,9 +1107,7 @@ axsg = axs.inset_axes((0.605,
                        1))
 
 axsg.plot(sigmanc_v/1e9,-(z-thickness_sa)/1e3,'r', label=f'Non-cratonic')
-# axsg.plot(sigmanc_min/1e9,-(z-t_sa)/1e3,'k--',lw=0.8)
 axsg.plot(sigmac_v/1e9,-(z-thickness_sa)/1e3,'k', label=f'Cratonic')
-
 
 axsg.grid(visible=True, axis='x',which='both',ls='--',color='gray',alpha=0.8)
 axsg.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
@@ -1111,15 +1118,18 @@ axsg.patch.set_alpha(0)
 axsg.xaxis.set_ticks_position('top')
 axsg.spines['left'].set_visible(False)
 axsg.spines['right'].set_visible(False)
-axsg.set_title('$\sigma_{YSE}$ (GPa)')
+axsg.set_title('$\sigma_{YSE}$ [GPa]')
 axsg.tick_params(labelsize=8)
 
-#Effective friction angle
+############################
+# Effective friction angle #
+############################
+
 axsf = axs.inset_axes((0.800,
                        0,
                        0.10,
                        0.30))
-axsf.patch.set_alpha(0)
+axsf.patch.set_alpha(0.4)
 
 # xdata = np.array([0, 0.05, 1.05, 1.1])
 xdata = np.array([0, 0.25, 0.75, 1.0])
@@ -1144,7 +1154,7 @@ axsfC = axsf.twinx()
 axsfC.set_ylim([0, 17])
 axsfC.set_yticks([2, 15])
 axsfC.set_yticklabels([4, 20])
-axsfC.set_ylabel('Cohesion (MPa)', fontsize=fisize, rotation=90)
+axsfC.set_ylabel('Cohesion [MPa]', fontsize=fisize, rotation=90)
 axsfC.tick_params(labelsize=fisize)
 
 #plot velocity bc
@@ -1164,9 +1174,10 @@ if(velocity_from_ascii == True):
     axr.fill_betweenx((-z + thickness_sa) / 1.0e3, VX[:, -1]* (100.0*365.0 * 24.0 * 3600.0), 0, color=None, facecolor=None, hatch='---',alpha=0)
     axr.set_ylim(ylimplot)
     axr.set_yticks([])
+    axr.set_xticks([])
     axr.patch.set_alpha(0)
-    axr.set_title('cm/y')
-    axr.xaxis.set_ticks_position('top')
+    axr.set_title(f'v = {velocity} [cm/y]', fontsize=8)
+    # axr.xaxis.set_ticks_position('top')
     axr.tick_params(labelsize=8)
     axr.set_xlim([-vr_plot, vr_plot])
     axr.spines['left'].set_visible(False)
@@ -1174,7 +1185,7 @@ if(velocity_from_ascii == True):
     axr.spines['bottom'].set_visible(False)
 
     # Left side velocity arrows
-    vl_plot = np.round(max(abs(VX[:, 0]* (100*365.0 * 24.0 * 3600.0))),0)
+    vl_plot = np.round(max(abs(VX[:, 0]* (100*365.0 * 24.0 * 3600.0))), 0)
     axl = axs.inset_axes((0,
                           0,
                           (1-fac)*2,
@@ -1184,9 +1195,11 @@ if(velocity_from_ascii == True):
 
     axl.set_ylim(-Lz/1000+thickness_sa/1000, 0+thickness_sa/1000)
     axl.set_yticks([])
+    axl.set_xticks([])
     axl.patch.set_alpha(0)
-    axl.set_title('cm/y')
-    axl.xaxis.set_ticks_position('top')
+    # axl.set_title(f'v = {v} cm/y')
+    # axl.xaxis.set_ticks_position('top')
+    # axl.set_xlim([0, 2*velocity])
     axl.set_xlim([0, vl_plot])
     axl.tick_params(labelsize=8)
     axl.spines['left'].set_visible(False)
@@ -1195,7 +1208,6 @@ if(velocity_from_ascii == True):
 figname = 'numerical_setup'
 fig.savefig(f"{figname}.png", bbox_inches="tight", dpi=300)
 plt.close()
-
 ##############################################################################
 # Scenario infos
 ##############################################################################
