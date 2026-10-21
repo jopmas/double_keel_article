@@ -13,8 +13,8 @@ multiprocessing.set_start_method('fork') #needed to run pymp in mac
 import pymp
 import glob
 #reading dataset
-Tdataset = xr.open_dataset("_output_temperature.nc")
-Pdataset = xr.open_dataset("_output_pressure.nc")
+Tdataset = xr.open_dataset("_temperature.nc")
+Pdataset = xr.open_dataset("_pressure.nc")
 
 #getting the dimensions
 Nx = int(Tdataset.nx)
@@ -50,26 +50,27 @@ take_asthenosphere = False
 
 
 if(take_specific_time):
-    instant_to_take = 20 #Myr
+    instant_to_take = 450 #Myr
     idx = (np.abs(Tdataset.time.values - instant_to_take)).argmin()
-    step_final = Tdataset.step.values[idx]
+    step_final = Tdataset.steps.values[idx]
 else:
-    step_final = Tdataset.step.values[-1] #14000
+    step_final = Tdataset.steps.values[-1] #14000
 
 
-x=[]
-z=[]
-id_vec=[]
-layer_vec=[]
 
-steps0 = sorted(glob.glob("step_0_*.txt"), key=os.path.getmtime)
+x=np.array([])
+z=np.array([])
+id_vec=np.array([])
+layer_vec=np.array([])
+
+steps0 = sorted(glob.glob("steps/step_0_*.txt"), key=os.path.getmtime)
 ncores = len(steps0) #20
-
+print(ncores, "cores detected")
 # ncores = 16
 #Reading the data of final step
 for rank in range(ncores):
     # print(f"rank {rank}")
-    file_name = f"step_{step_final}_{rank}.txt"
+    file_name = f"steps/step_{step_final}_{rank}.txt"
 
     if os.path.getsize(file_name)>0:
         step_rank = pd.read_csv(
@@ -114,7 +115,7 @@ search_thickness = 50.0e3
 # x_end = 1400.0e3
 
 x_begin = 500.0e3
-x_end = 1300.0e3
+x_end = 1600.0e3
 
 # x_begin = 600.0e3
 # x_end = 1400.0e3
@@ -214,23 +215,24 @@ all_step = pymp.shared.list()
 
 with pymp.Parallel() as p:
     for i in p.range(end, start-step, -step):
+        # print('entrei')
     # for i in p.range(end, start, -step):
-        # print(f"Step: {Tdataset.step.values[i]}")
-        temperature = Tdataset.temperature[i].values.T
-        pressure = Pdataset.pressure[i].values.T
+        # print(f"Step: {Tdataset.steps.values[i]}")
+        temperature = Tdataset.temperature[i].values
+        pressure = Pdataset.pressure[i].values
         time_current = Tdataset.time.values[i]
-        step_current = Tdataset.step.values[i]
+        step_current = Tdataset.steps.values[i]
         all_time.append(time_current)
         all_step.append(step_current)
         
-        x=[]
-        z=[]
-        id_vec=[]
-        layer_vec=[]
+        x=np.array([])
+        z=np.array([])
+        id_vec=np.array([])
+        layer_vec=np.array([])
 
         #getting data from step files
         for rank in range(ncores):
-            file_name = f"step_{Tdataset.step.values[i]}_{rank}.txt"
+            file_name = f"steps/step_{Tdataset.steps.values[i]}_{rank}.txt"
             if os.path.getsize(file_name)>0:
                 A = pd.read_csv(
                     file_name,
@@ -260,39 +262,75 @@ with pymp.Parallel() as p:
         x = x[cond]
         z = z[cond]
         id_vec = id_vec[cond]
-        
-        #tracking x, z position
-        vecx_track = []
-        vecz_track = []
-        for ii in range(np.size(part_selec)):
-            id_selec, = np.where(id_vec==part_selec[ii])
-            xaux = x[id_selec]
-            zaux = z[id_selec]
-            vecx_track = np.append(vecx_track,xaux)
-            vecz_track = np.append(vecz_track,zaux)
 
-        jm = ((vecx_track-0)//dx).astype(int)
-        im = ((vecz_track+Lz)//dz).astype(int)
+        #tracking x, z position (sempre n_tracked valores, na ordem de part_selec)
+        n_sel = np.size(part_selec)
+        vecx_track = np.full(n_sel, np.nan)
+        vecz_track = np.full(n_sel, np.nan)
 
-        xw = (vecx_track - xx[im,jm])/dx
-        zw = (vecz_track - zz[im,jm])/dz
+        uid, first_idx = np.unique(id_vec, return_index=True)  # remove duplicatas
+        pos = np.clip(np.searchsorted(uid, part_selec), 0, max(len(uid)-1, 0))
+        found = (uid[pos] == part_selec) if len(uid) > 0 else np.zeros(n_sel, bool)
 
-        present_temperature =	temperature[im,jm]*    (1.-xw)*(1.-zw)+\
-                                temperature[im,jm+1]*  (xw   )*(1.-zw)+\
-                                temperature[im+1,jm]*  (1.-xw)*(   zw)+\
-                                temperature[im+1,jm+1]*(   xw)*(   zw)
+        vecx_track[found] = x[first_idx[pos[found]]]
+        vecz_track[found] = z[first_idx[pos[found]]]
 
-        present_pressure =  pressure[im,jm]*    (1.-xw)*(1.-zw)+\
-                            pressure[im,jm+1]*  (xw   )*(1.-zw)+\
-                            pressure[im+1,jm]*  (1.-xw)*(   zw)+\
-                            pressure[im+1,jm+1]*(   xw)*(   zw)
+        #interpolando T e P só para as partículas encontradas
+        present_temperature = np.full(n_sel, np.nan)
+        present_pressure = np.full(n_sel, np.nan)
+
+        xv = vecx_track[found]
+        zv = vecz_track[found]
+        jm = np.clip((xv // dx).astype(int), 0, Nx-2)
+        im = np.clip(((zv + Lz) // dz).astype(int), 0, Nz-2)
+        xw = (xv - xx[im, jm]) / dx
+        zw = (zv - zz[im, jm]) / dz
+
+        present_temperature[found] = temperature[im,jm]*(1.-xw)*(1.-zw) + \
+                                     temperature[im,jm+1]*xw*(1.-zw) + \
+                                     temperature[im+1,jm]*(1.-xw)*zw + \
+                                     temperature[im+1,jm+1]*xw*zw
+
+        present_pressure[found] = pressure[im,jm]*(1.-xw)*(1.-zw) + \
+                                  pressure[im,jm+1]*xw*(1.-zw) + \
+                                  pressure[im+1,jm]*(1.-xw)*zw + \
+                                  pressure[im+1,jm+1]*xw*zw
+
+        if (~found).sum() > 0:
+            print(f"step {step_current}: {(~found).sum()} partículas não encontradas (NaN)")
+
+        # #tracking x, z position
+        # vecx_track = np.array([])
+        # vecz_track = np.array([])
+        # for ii in range(np.size(part_selec)):
+        #     id_selec, = np.where(id_vec==part_selec[ii])
+        #     xaux = x[id_selec]
+        #     zaux = z[id_selec]
+        #     vecx_track = np.append(vecx_track,xaux)
+        #     vecz_track = np.append(vecz_track,zaux)
+
+        # jm = ((vecx_track-0)//dx).astype(int)
+        # im = ((vecz_track+Lz)//dz).astype(int)
+
+        # xw = (vecx_track - xx[im,jm])/dx
+        # zw = (vecz_track - zz[im,jm])/dz
+
+        # present_temperature =	temperature[im,jm]*    (1.-xw)*(1.-zw)+\
+        #                         temperature[im,jm+1]*  (xw   )*(1.-zw)+\
+        #                         temperature[im+1,jm]*  (1.-xw)*(   zw)+\
+        #                         temperature[im+1,jm+1]*(   xw)*(   zw)
+
+        # present_pressure =  pressure[im,jm]*    (1.-xw)*(1.-zw)+\
+        #                     pressure[im,jm+1]*  (xw   )*(1.-zw)+\
+        #                     pressure[im+1,jm]*  (1.-xw)*(   zw)+\
+        #                     pressure[im+1,jm+1]*(   xw)*(   zw)
         
         vecx_track_evolution[i] = vecx_track
         vecz_track_evolution[i] = vecz_track
         present_pressure_evolution[i] = present_pressure / 1.0e6
         present_temperature_evolution[i] = present_temperature
 
-        np.savetxt(f"track_xzPT_step_{str(Tdataset.step.values[i]).zfill(6)}.txt", np.c_[vecx_track, vecz_track, present_pressure/1.0E6, present_temperature], fmt="%.5f")
+        np.savetxt(f"track_xzPT_step_{str(Tdataset.steps.values[i]).zfill(6)}.txt", np.c_[vecx_track, vecz_track, present_pressure/1.0E6, present_temperature], fmt="%.5f")
 
 # print(f"len of:\n vecx_track_evolution {len(vecx_track_evolution)}\n vecz_track_evolution {len(vecz_track_evolution)}\n present_pressure_evolution {len(present_pressure_evolution)}\n present_temperature_evolution {len(present_temperature_evolution)}")
 

@@ -16,6 +16,13 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker
 import matplotlib.patches as patches
 
+from matplotlib.colors import ListedColormap
+
+import matplotlib.ticker
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+from matplotlib.ticker import (MultipleLocator, FormatStrFormatter,
+                               AutoMinorLocator)
+
 matplotlib.use('agg')
 
 path = os.getcwd().split('/')
@@ -74,70 +81,16 @@ properties = [#Properties from mandyoc. Comment/uncomment to select which ones y
             #  'viscosity'
              ]
 
-#######################################################
-# Read ascii outputs and save them as xarray.Datasets #
-#######################################################
-
-new_datasets = change_dataset(properties, datasets)
-# print(new_datasets)
-to_remove = []
-remove_density=False
-if ('density' not in properties): #used to plot air/curst interface
-        properties.append('density')
-        new_datasets = change_dataset(properties, datasets)
-        to_remove.append('density')
-        # remove_density=True
-
-if ('surface' not in properties): #used to plot air/curst interface
-        properties.append('surface')
-        new_datasets = change_dataset(properties, datasets)
-        to_remove.append('surface')
-        # remove_density=True
-
-if (plot_isotherms): #add datasets needed to plot isotherms
-    if ('temperature' not in new_datasets):
-        properties.append('temperature')
-        new_datasets = change_dataset(properties, datasets)
-        to_remove.append('temperature')
-
-# print(f"newdatasets: {new_datasets}")
-
-if (plot_melt): #add datasets needed to plot melt fraction
-    if ('melt' not in properties):
-        properties.append('melt')
-    if ('incremental_melt' not in properties):
-        properties.append('incremental_melt')
-    new_datasets = change_dataset(properties, datasets)
-
-    #removing the auxiliary datasets to not plot
-    to_remove.append('melt')
-    to_remove.append('incremental_melt')
-
-if(clean_plot): #a clean plot
-    new_datasets = change_dataset(properties, datasets)
-
-for item in to_remove:
-    properties.remove(item)
-    
-dataset = read_datasets(model_path, new_datasets)
-
-# Normalize velocity values
-if ("velocity_x" and "velocity_z") in dataset.data_vars:
-    v_max = np.max((dataset.velocity_x**2 + dataset.velocity_z**2)**(0.5))    
-    dataset.velocity_x[:] = dataset.velocity_x[:] / v_max
-    dataset.velocity_z[:] = dataset.velocity_z[:] / v_max
-
 #########################################
 # Get domain and particles informations #
 #########################################
-
-Nx = int(dataset.nx)
-Nz = int(dataset.nz)
-Lx = float(dataset.lx)
-Lz = float(dataset.lz)
+Nx = int(xr.open_dataset(f"{model_path}/_strain.nc").nx) #int(strain_dataset.nx)
+Nz = int(xr.open_dataset(f"{model_path}/_strain.nc").nz) #int(strain_dataset.nz)
+Lx = float(xr.open_dataset(f"{model_path}/_strain.nc").lx) #float(strain_dataset.lx)
+Lz = float(xr.open_dataset(f"{model_path}/_strain.nc").lz) #float(strain_dataset.lz)
 
 x = np.linspace(0, Lx/1000.0, Nx)
-z = np.linspace(Lz/1000.0, 0, Nz)
+z = np.linspace(-Lz/1000.0, 0, Nz)
 xx, zz  = np.meshgrid(x, z)
 
 trackdataset = xr.open_dataset("_track_xzPT_all_steps.nc")
@@ -147,13 +100,6 @@ P = trackdataset.ptrack.values[::-1]
 T = trackdataset.ttrack.values[::-1]
 time = trackdataset.time.values[::-1]
 steps = trackdataset.step.values[::-1]
-
-# x_track = trackdataset.xtrack.values
-# z_track = trackdataset.ztrack.values
-# P = trackdataset.ptrack.values
-# T = trackdataset.ttrack.values
-# time = trackdataset.time.values
-# steps = trackdataset.step.values
 
 n = int(trackdataset.ntracked.values)
 nTotal = np.size(x_track)
@@ -167,8 +113,8 @@ x_track = np.reshape(x_track,(steps,n))
 z_track = np.reshape(z_track,(steps,n))
 P = np.reshape(P,(steps,n))/1.0e3 #GPa
 T = np.reshape(T,(steps,n))
-T_maxs = np.max(T, axis=0) #get the maximum temperature for each particle to categorize by temperature
-P_maxs = np.max(P, axis=0) #get the maximum pressure for each particle to categorize by temperature
+T_maxs = np.nanmax(T, axis=0) #get the maximum temperature for each particle to categorize by temperature
+P_maxs = np.nanmax(P, axis=0) #get the maximum pressure for each particle to categorize by temperature
 
 particles_layers = trackdataset.particles_layers.values[::-1] #code of the tracked layers
 
@@ -251,12 +197,8 @@ else:
 plot_colorbar = True
 h_air = 40.0
 
-t0 = dataset.time[0]
-t1 = dataset.time[1]
-dt = int(t1 - t0)
-
-start = int(t0)
-end = int(dataset.time.size - 1)
+start = 0
+end = int(xr.open_dataset(f"{model_path}/_strain.nc").time.size)
 step = 4
 
 # start = 4
@@ -524,160 +466,149 @@ color_mid_T = 'xkcd:teal' #subducted crustal rocks 400<T<900 and P>2GPa
 color_high_T_wedge = 'xkcd:raspberry' #orogenic wedge rocks T>=900 and P<2GPa
 color_high_T_subducted = 'xkcd:dirty purple' #subducted crustal rocks T>900 and P>2GPa
 
+
+steps = np.array(xr.open_dataset(f"_strain.nc").steps.values)
+times = np.array(xr.open_dataset(f"_strain.nc").time.values)
+
+cr = 255.
+color_air = (1.,1.,1.)
+color_sed = (241./cr,184./cr,68./cr)
+color_dec = (137./cr,81./cr,151./cr)
+color_uc = (228./cr,156./cr,124./cr)
+color_lc = (240./cr,209./cr,188./cr)
+color_lit = (155./cr,194./cr,155./cr)
+color_mlit_uc = (180. / cr, 194. / cr, 162. / cr)
+color_mlit_lc = (155. / cr, 194. / cr, 155. / cr)
+color_ast = (207./cr,226./cr,205./cr)
+
+
+colors = [color_ast,
+          color_mlit_uc,
+          color_mlit_lc,
+          color_lit,
+          color_lc,
+          color_uc,
+          color_dec,
+          color_sed,
+          color_air]
+
+#Creating a custom colormap according to the list of colors defined above.
+# This colormap will be used to plot the lithology mesh, where each lithology type is represented by a specific color.
+
+cmap = ListedColormap(colors)
+np.seterr(divide='ignore')
+
 with pymp.Parallel() as p:
+    lithology = xr.open_dataset("_lithology.nc", cache=False, engine="h5netcdf")["lithology"]
+    strain = xr.open_dataset("_strain.nc", cache=False, engine="h5netcdf")["strain"]
+    temperature = xr.open_dataset("_temperature.nc", cache=False, engine="h5netcdf")["temperature"]
+
     for i in p.range(start, end, step):
         
-        data = dataset.isel(time=i)
-        current_time = float(data.time.values)
+        # data = dataset.isel(time=i)
+        current_time = float(times[i])
         # print(f"Plotting frame {i} of {end} at time {current_time} Myr...")
-        for prop in properties:
-            fig, axs = plt.subplots(1, 2, figsize=(12, 3), constrained_layout=True, gridspec_kw={'width_ratios': [1, 0.4]})
-            
-            xlims = [0, float(data.lx) / 1.0e3]
-            ylims = [-float(data.lz) / 1.0e3 + 40, 40]
-            # ylims = [-150, 40]
-            # ylims = [-400, 40]
+        # for prop in properties:
+        fig, axs = plt.subplots(1, 2, figsize=(12, 3), constrained_layout=True, gridspec_kw={'width_ratios': [1, 0.4]})
+        
+        xlims = [0, Lx / 1.0e3]
+        ylims = [-Lz / 1.0e3 + 40, 40]
+        # ylims = [-150, 40]
+        # ylims = [-400, 40]
 
-            plot_property(data, prop, xlims, ylims, model_path,
-                        fig,
-                        axs[0],
-                        plot_isotherms = plot_isotherms,
-                        isotherms = [500, 600, 700, 800,900, 1300],
-                        isotherms_linewidth = 0.5,
-                        plot_colorbar=plot_colorbar,
-                        bbox_to_anchor=(0.05,#horizontal position respective to parent_bbox or "loc" position
-                                        0.20,# vertical position
-                                        0.1,# width
-                                        0.25),
-                        plot_melt = plot_melt,
-                        color_incremental_melt = color_incremental_melt,
-                        color_depleted_mantle = color_depleted_mantle
-                        )
+        axs[0].imshow(lithology.isel(time=i).values[::-1, :], aspect='auto', extent=(0, Lx/1000, -Lz/1000+40, 40), cmap=cmap, vmin=0, vmax=8, alpha=1.0)  
+        
+        # strain  = strain_dataset.strain.values[i][::-1,:]
+        # temperature = temperature_dataset.temperature.values[i][::-1,:]   
 
-            for particle, particle_layer, T_max, P_max in zip(range(n), particles_layers, T_maxs, P_maxs):
-                #Plot particles in prop subplot
+        # axs.imshow(np.log10(strain), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=-0.5, vmax=0.9, alpha=0.2)
+        axs[0].imshow(np.log10(strain.isel(time=i).values[::-1, :]), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=-0.5, vmax=0.9, alpha=0.2, aspect='auto')
+        axs[0].contour(x, z+40, temperature.isel(time=i).values, levels=[500, 600, 700, 800, 900, 1300], colors='r', linewidths=1.0)
+              
 
-                # if((plot_mantle_lithosphere_particles == False) & (particle_layer == mantle_lithosphere_code)): #lithospheric mantle particles
-                #     plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
-                #                                                 markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                #                                                 color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
-                #                                                 plot_steps=False)
-                
-                # if(double_keel==False):
-                #     if((plot_upper_craton_particles == False) & (particle_layer == upper_craton_code)):
-                #         plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
-                #                                                     markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                #                                                     color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
-                #                                                     plot_steps=False)
-
-                #     if((plot_lower_craton_particles == False) & (particle_layer == lower_craton_code)):
-                #         plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
-                #                                                     markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                #                                                     color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
-                #                                                     plot_steps=False)
-
-                if((plot_lower_crust_particles == True) & ((particle_layer == lower_crust1_code) | (particle_layer == lower_crust2_code))):
-                    plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, P_max, particle,
-                                                            markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                                                            color_wedge=color_wedge, #orogenic wedge rocks 400<T<900 and P<2GPa
-                                                            color_mid_T=color_mid_T, #subducted crustal rocks 400<T<900 and P>2GPa
-                                                            color_high_T_wedge=color_high_T_wedge, #orogenic wedge rocks T>=900 and P<2GPa
-                                                            color_high_T_subducted=color_high_T_subducted, #subducted crustal rocks T>900 and P>2GPa
-                                                            plot_steps=False)
-                    
-                # if((plot_upper_crust_particles == True) & (particle_layer == upper_crust_code)):
-                #     plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
-                #                                             markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                #                                             color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
-                #                                             plot_steps=False)
-
-                # if((plot_decolement_particles == False) & (particle_layer == decolement_code)):
-                #     plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
-                #                                             markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                #                                             color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
-                #                                             plot_steps=False)
-
-                # if((plot_sediments_particles == False) & (particle_layer == sediments_code)):
-                #     plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, particle,
-                #                                             markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
-                #                                             color_low_T='xkcd:bright purple', color_mid_T='xkcd:dark green', color_high_T='xkcd:orange',
-                #                                             plot_steps=False)
-            
-            # Setting plot details
-
-            # Stability fields
-            plot_PT_fields(axs[1], vertices_UHT, x_text=x_text_UHT, y_text=y_text_UHT, label=label_UHT,
-                           color=color_UHT, fsize_text=fsize_UHT, alpha=alpha_UHT)
-            plot_PT_fields(axs[1], vertices_granulite_HP, x_text=x_text_granulite_HP, y_text=y_text_granulite_HP, label=label_granulite_HP,
-                           color=color_granulite_HP, fsize_text=fsize_granulite_HP, alpha=alpha_granulite_HP)
-            plot_PT_fields(axs[1], vertices_eclogite, x_text=x_text_eclogite, y_text=y_text_eclogite, label=label_eclogite,
-                           color=color_eclogite, fsize_text=fsize_eclogite, alpha=alpha_eclogite)
-            plot_PT_fields(axs[1], vertices_granulite, x_text=x_text_granulite, y_text=y_text_granulite, label=label_granulite,
-                           color=color_granulite, fsize_text=fsize_granulite, alpha=alpha_granulite)
-            plot_PT_fields(axs[1], vertices_anfibolite, x_text=x_text_anfibolite, y_text=y_text_anfibolite, label=label_anfibolite,
-                           color=color_anfibolite, fsize_text=fsize_anfibolite, alpha=alpha_anfibolite)
-            plot_PT_fields(axs[1], vertices_blueschist, x_text=x_text_blueschist, y_text=y_text_blueschist, label=label_blueschist,
-                           color=color_blueschist, fsize_text=fsize_blueschist, alpha=alpha_blueschist)
-            plot_PT_fields(axs[1], vertices_greenschiest, x_text=x_text_greenschiest, y_text=y_text_greenschiest, label=label_greenschiest,
-                           color=color_greenschiest, fsize_text=fsize_greenschiest, alpha=alpha_greenschiest)
-            plot_PT_fields(axs[1], vertices_sub_greenschiest, x_text=x_text_sub_greenschiest, y_text=y_text_sub_greenschiest, label=label_sub_greenschiest,
-                           color=color_sub_greenschiest, fsize_text=fsize_sub_greenschiest, alpha=alpha_sub_greenschiest)
+        for particle, particle_layer, T_max, P_max in zip(range(n), particles_layers, T_maxs, P_maxs):
+            #Plot particles in prop subplot
 
 
-            fsize = 14
-            axs[0].set_xlabel('Distance [km]', fontsize=fsize)
-            axs[0].set_ylabel('Depth [km]', fontsize=fsize)
-            axs[0].tick_params(axis='both', labelsize=fsize)
+            if((plot_lower_crust_particles == True) & ((particle_layer == lower_crust1_code) | (particle_layer == lower_crust2_code))):
+                plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_track, z_track, P, T, T_max, P_max, particle,
+                                                        markersize=markersize, linewidth=linewidth, line_alpha=line_alpha,
+                                                        color_wedge=color_wedge, #orogenic wedge rocks 400<T<900 and P<2GPa
+                                                        color_mid_T=color_mid_T, #subducted crustal rocks 400<T<900 and P>2GPa
+                                                        color_high_T_wedge=color_high_T_wedge, #orogenic wedge rocks T>=900 and P<2GPa
+                                                        color_high_T_subducted=color_high_T_subducted, #subducted crustal rocks T>900 and P>2GPa
+                                                        plot_steps=False)
+        
+        # Setting plot details
 
-            axs[1].set_xlim([100, 1100])
-            ylims = np.array([0, 4500])/1.0e3 #GPa
-            axs[1].set_ylim(ylims)
-            axs[1].set_xlabel(r'Temperature [$^{\circ}$C]', fontsize=fsize)
-            axs[1].set_ylabel('Pressure [GPa]', fontsize=fsize)
-            # axs[1].yaxis.set_label_position("right")
-            # axs[1].tick_params(axis='y', labelright=True, labelleft=False, labelsize=fsize)
-            
-            axs[1].tick_params(axis='both', labelsize=fsize-2)
-            axs[1].grid('-k', alpha=0.7)
+        # Stability fields
+        plot_PT_fields(axs[1], vertices_UHT, x_text=x_text_UHT, y_text=y_text_UHT, label=label_UHT,
+                        color=color_UHT, fsize_text=fsize_UHT, alpha=alpha_UHT)
+        plot_PT_fields(axs[1], vertices_granulite_HP, x_text=x_text_granulite_HP, y_text=y_text_granulite_HP, label=label_granulite_HP,
+                        color=color_granulite_HP, fsize_text=fsize_granulite_HP, alpha=alpha_granulite_HP)
+        plot_PT_fields(axs[1], vertices_eclogite, x_text=x_text_eclogite, y_text=y_text_eclogite, label=label_eclogite,
+                        color=color_eclogite, fsize_text=fsize_eclogite, alpha=alpha_eclogite)
+        plot_PT_fields(axs[1], vertices_granulite, x_text=x_text_granulite, y_text=y_text_granulite, label=label_granulite,
+                        color=color_granulite, fsize_text=fsize_granulite, alpha=alpha_granulite)
+        plot_PT_fields(axs[1], vertices_anfibolite, x_text=x_text_anfibolite, y_text=y_text_anfibolite, label=label_anfibolite,
+                        color=color_anfibolite, fsize_text=fsize_anfibolite, alpha=alpha_anfibolite)
+        plot_PT_fields(axs[1], vertices_blueschist, x_text=x_text_blueschist, y_text=y_text_blueschist, label=label_blueschist,
+                        color=color_blueschist, fsize_text=fsize_blueschist, alpha=alpha_blueschist)
+        plot_PT_fields(axs[1], vertices_greenschiest, x_text=x_text_greenschiest, y_text=y_text_greenschiest, label=label_greenschiest,
+                        color=color_greenschiest, fsize_text=fsize_greenschiest, alpha=alpha_greenschiest)
+        plot_PT_fields(axs[1], vertices_sub_greenschiest, x_text=x_text_sub_greenschiest, y_text=y_text_sub_greenschiest, label=label_sub_greenschiest,
+                        color=color_sub_greenschiest, fsize_text=fsize_sub_greenschiest, alpha=alpha_sub_greenschiest)
 
-            #creating depth axis to PTt plot
-            ax1 = axs[1].twinx()
-            ax1.set_ylim(ylims*1000/30)
-            # ax1.tick_params(axis='y', labelright=False, labelleft=True, labelsize=fsize)
-            ax1.set_ylabel('Depth [km]', fontsize=fsize)
-            ax1.tick_params(axis='y', labelsize=fsize-2)
-            # nticks = len(axs[1].get_yticks())
-            # ax1.yaxis.set_major_locator(matplotlib.ticker.LinearLocator(nticks))
-            # ax1.yaxis.set_label_position("left")
 
-            #creating legend for particles
-            # axs[1].plot([-10,-10], [-10,-10], '-', color=color_low_T, markersize=markersize, label='Lower temperature', zorder=60)
-            # axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Intermediate temperature', zorder=60)
-            # axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T, markersize=markersize, label='Higher temperature', zorder=60)
+        fsize = 14
+        axs[0].set_xlabel('Distance [km]', fontsize=fsize)
+        axs[0].set_ylabel('Depth [km]', fontsize=fsize)
+        axs[0].tick_params(axis='both', labelsize=fsize)
 
-            axs[1].set_xlabel(r'Temperature [$^{\circ}$C]', fontsize=fsize)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_wedge, markersize=markersize, label='Wedge LT', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Subducted LT', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_wedge, markersize=markersize, label='Wedge HT', zorder=60)
-            axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_subducted, markersize=markersize, label='Subducted HT', zorder=60)
+        axs[1].set_xlim([100, 1100])
+        ylims = np.array([0, 4500])/1.0e3 #GPa
+        axs[1].set_ylim(ylims)
+        axs[1].set_xlabel(r'Temperature [$^{\circ}$C]', fontsize=fsize)
+        axs[1].set_ylabel('Pressure [GPa]', fontsize=fsize)
+        # axs[1].yaxis.set_label_position("right")
+        # axs[1].tick_params(axis='y', labelright=True, labelleft=False, labelsize=fsize)
+        
+        axs[1].tick_params(axis='both', labelsize=fsize-2)
+        axs[1].grid('-k', alpha=0.7)
 
-            axs[1].legend(loc='upper left', ncol=1, fontsize=8, handlelength=0, handletextpad=0, labelcolor='linecolor')
+        #creating depth axis to PTt plot
+        ax1 = axs[1].twinx()
+        ax1.set_ylim(ylims*1000/30)
+        # ax1.tick_params(axis='y', labelright=False, labelleft=True, labelsize=fsize)
+        ax1.set_ylabel('Depth [km]', fontsize=fsize)
+        ax1.tick_params(axis='y', labelsize=fsize-2)
+        # nticks = len(axs[1].get_yticks())
+        # ax1.yaxis.set_major_locator(matplotlib.ticker.LinearLocator(nticks))
+        # ax1.yaxis.set_label_position("left")
 
-            # ax1.legend(loc='center left', ncol=1, fontsize=6)
+        axs[1].set_xlabel(r'Temperature [$^{\circ}$C]', fontsize=fsize)
+        axs[1].plot([-10,-10], [-10,-10], '-', color=color_wedge, markersize=markersize, label='Wedge LT', zorder=60)
+        axs[1].plot([-10,-10], [-10,-10], '-', color=color_mid_T, markersize=markersize, label='Subducted LT', zorder=60)
+        axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_wedge, markersize=markersize, label='Wedge HT', zorder=60)
+        axs[1].plot([-10,-10], [-10,-10], '-', color=color_high_T_subducted, markersize=markersize, label='Subducted HT', zorder=60)
 
-            if(plot_melt):
-                #plotting melt legend
-                text_fsize = 12
-                axs[0].text(0.01, 0.90, r'Melt Fraction $\left(\frac{\partial \phi}{\partial t}\right)$', color='xkcd:bright pink', fontsize=text_fsize, transform=axs[0].transAxes, zorder=60)
-                axs[0].text(0.01, 0.80, r'Depleted Mantle ($\phi$)', color='xkcd:bright purple', fontsize=text_fsize, transform=axs[0].transAxes, zorder=60)
+        axs[1].legend(loc='upper left', ncol=1, fontsize=8, handlelength=0, handletextpad=0, labelcolor='linecolor')
 
-                figname = f"{model_name}_{prop}_and_PTt_temperature_coded_MeltFrac_{str(int(data.step)).zfill(6)}.png"
-            else:
-                figname = f"{model_name}_{prop}_and_PTt_temperature_coded_{str(int(data.step)).zfill(6)}.png"
-            fig.savefig(f"_output/{figname}", dpi=300)
-            plt.close('all')
+        # ax1.legend(loc='center left', ncol=1, fontsize=6)
 
-        del data
+        if(plot_melt):
+            #plotting melt legend
+            text_fsize = 12
+            axs[0].text(0.01, 0.90, r'Melt Fraction $\left(\frac{\partial \phi}{\partial t}\right)$', color='xkcd:bright pink', fontsize=text_fsize, transform=axs[0].transAxes, zorder=60)
+            axs[0].text(0.01, 0.80, r'Depleted Mantle ($\phi$)', color='xkcd:bright purple', fontsize=text_fsize, transform=axs[0].transAxes, zorder=60)
+
+            figname = f"{model_name}_lithology_and_PTt_temperature_coded_MeltFrac_{str(int(steps[i])).zfill(6)}.png"
+        else:
+            figname = f"{model_name}_lithology_and_PTt_temperature_coded_{str(int(steps[i])).zfill(6)}.png"
+        fig.savefig(f"_output/{figname}", dpi=300)
+        plt.close('all')
+
+        # del data
         gc.collect()
 
 print("Done!")
@@ -688,7 +619,7 @@ if(make_videos):
 
     fps = 24
     for prop in properties:
-        videoname = f'{model_path}/_output/{model_name}_{prop}_and_PTt'
+        videoname = f'{model_path}/_output/{model_name}_lithology_and_PTt'
 
         if(plot_melt):
             videoname = f'{videoname}_MeltFrac'
@@ -703,9 +634,9 @@ if(make_videos):
         try:
             comand = f"rm {videoname}.mp4"
             result = subprocess.run(comand, shell=True, check=True, capture_output=True, text=True)
-            print(f"\tRemoving previous {prop} video.")
+            print(f"\tRemoving previous lithology video.")
         except:
-            print(f"\tNo {prop} video to remove.")
+            print(f"\tNo lithology video to remove.")
 
         comand = f"ffmpeg -r {fps} -f image2 -s 1920x1080 -pattern_type glob -i \"{videoname}_*.png\" -vcodec libx264 -vf 'pad=ceil(iw/2)*2:ceil(ih/2)*2' -r 24 -y -an -crf 25 -pix_fmt yuv420p {videoname}.mp4"
         result = subprocess.run(comand, shell=True, check=True, capture_output=True, text=True)
@@ -746,7 +677,7 @@ if(make_videos):
 if(make_gifs):
     print("Converting videos to gifs...")
     for prop in properties:
-        gifname = f'{model_path}/_output/{model_name}_{prop}_and_PTt'
+        gifname = f'{model_path}/_output/{model_name}_lithology_and_PTt'
 
         if(plot_melt):
             gifname = f'{gifname}_MeltFrac'
@@ -762,9 +693,9 @@ if(make_gifs):
         try:
             comand = f"rm {gifname}.gif"
             result = subprocess.run(comand, shell=True, check=True, capture_output=True, text=True)
-            print(f"\tRemoving previous {prop} gif.")
+            print(f"\tRemoving previous lithology gif.")
         except:
-            print(f"\tNo {prop} gif to remove.")
+            print(f"\tNo lithology gif to remove.")
         
         comand = f"ffmpeg -ss 0 -t 15 -i '{gifname}.mp4' -vf \"fps=30,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse\" -loop 0 {gifname}.gif"
         result = subprocess.run(comand, shell=True, check=True, capture_output=True, text=True) 

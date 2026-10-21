@@ -10,8 +10,11 @@ import xarray as xr
 import subprocess
 
 #reading dataset
-Tdataset = xr.open_dataset("_output_temperature.nc")
-Pdataset = xr.open_dataset("_output_pressure.nc")
+# Tdataset = xr.open_dataset("_output_temperature.nc")
+# Pdataset = xr.open_dataset("_output_pressure.nc")
+
+Tdataset = xr.open_dataset("_temperature.nc")
+Pdataset = xr.open_dataset("_pressure.nc")
 
 #getting the dimensions
 Nx = int(Tdataset.nx)
@@ -38,7 +41,7 @@ zs = []
 
 verif=0
 
-step_final = Tdataset.step.values[-1] #14000
+step_final = Tdataset.steps.values[-1] #14000
 print("Final step: ", step_final)
 
 x=[]
