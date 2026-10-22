@@ -499,8 +499,6 @@ basal_heat                          = 0.0          # default is -1.0
 # Surface processes
 sp_surface_tracking                 = {sp_surface_tracking}         # default is False [True/False]
 sp_surface_processes                = {sp_surface_processes}         # default is False [True/False]
-sp_dt                               = 1.0e5        # default is 0.0
-sp_d_c                              = 1.0          # default is 0.0
 plot_sediment                       = False         # default is False [True/False]
 a2l                                 = True          # default is True [True/False]
 free_surface_stab                   = True          # default is True [True/False]
@@ -623,12 +621,23 @@ if(preset == False):
 
     H = np.zeros_like(T)
 
-    cond = (z >= thickness_sa) & (z < thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)  # upper crust
+    #Radiogenic heat production for each layer
+    
+    #decolement
+    cond = (z >= thickness_sa + thickness_sed) & (z < thickness_sa + thickness_sed + thickness_decolement)  # decolement
+    H[cond] = H_dec
+
+    #Sediments
+    cond = (z >= thickness_sa) & (z < thickness_sa + thickness_sed)  # sediments
+    H[cond] = H_sed 
+
+    #Upper crust
+    cond = (z >= thickness_sa + thickness_sed + thickness_decolement) & (z < thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust)  # upper crust
     H[cond] = H_upper_crust
 
+    #Lower crust
     cond = (z >= thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust) & (
-        z < thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust
-    )  # lower crust
+        z < thickness_sa + thickness_sed + thickness_decolement + thickness_upper_crust + thickness_lower_crust)  # lower crust
     H[cond] = H_lower_crust
 
     #Conductive model
