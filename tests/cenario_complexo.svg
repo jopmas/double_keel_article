@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800mm" height="300mm" viewBox="0 0 800 300">
+ <g transform="scale(0.5,1)">
+  <rect x="0" y="0" width="1600" height="300" style="fill:#cfe2cd"/>
+  <path d="M 0 0 H 1600 V 195 H 1000 C 900 195, 900 120, 800 120 C 700 120, 700 195, 600 195 H 0 Z" style="fill:#9bc29b"/>
+  <rect x="0" y="0" width="1600" height="75" fill="#f0d1bc"/>
+  <rect x="0" y="0" width="1600" height="65" style="fill:#e49c7c"/>
+  <path d="M 500 40 Q 800 120 1100 40 Z" style="fill:#f1b844"/>
+  <rect x="0" y="0" width="1600" height="40" style="fill:#ffffff"/>
+  <polygon points="300,45 310,45 380,160 370,160" style="fill:#000000"/>
+  <ellipse cx="1300" cy="70" rx="20" ry="3" style="fill:#000000"/>
+  <text x="10" y="10">ignore me</text>
+  <rect x="10" y="250" width="10" height="10" style="fill:#ff00ff"/>
+  <rect x="10" y="250" width="10" height="10" style="fill:#000000;display:none"/>
+ </g>
+</svg>
