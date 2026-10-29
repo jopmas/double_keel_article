@@ -34,6 +34,7 @@ sys.path.append(os.path.abspath(path_to_functions))
 if '' in sys.path:
     sys.path.remove('')
 from functions.mandyocIO import read_datasets, change_dataset, plot_property, find_nearest
+from functions.mandyoc_nc import open_mandyoc, mesh_info, mask_air, legacy_lithology_codes
 
 ####################################################################################################################################
 model_path = os.getcwd() # Get local file
@@ -84,10 +85,7 @@ properties = [#Properties from mandyoc. Comment/uncomment to select which ones y
 #########################################
 # Get domain and particles informations #
 #########################################
-Nx = int(xr.open_dataset(f"{model_path}/_strain.nc").nx) #int(strain_dataset.nx)
-Nz = int(xr.open_dataset(f"{model_path}/_strain.nc").nz) #int(strain_dataset.nz)
-Lx = float(xr.open_dataset(f"{model_path}/_strain.nc").lx) #float(strain_dataset.lx)
-Lz = float(xr.open_dataset(f"{model_path}/_strain.nc").lz) #float(strain_dataset.lz)
+Nx, Nz, Lx, Lz = mesh_info(model_path) # works with tapioca and old .nc files
 
 x = np.linspace(0, Lx/1000.0, Nx)
 z = np.linspace(-Lz/1000.0, 0, Nz)
@@ -198,7 +196,7 @@ plot_colorbar = True
 h_air = 40.0
 
 start = 0
-end = int(xr.open_dataset(f"{model_path}/_strain.nc").time.size)
+end = int(open_mandyoc(model_path, "strain").time.size)
 step = 4
 
 # start = 4
@@ -502,8 +500,8 @@ color_high_T_wedge = 'xkcd:raspberry' #orogenic wedge rocks T>=900 and P<2GPa
 color_high_T_subducted = 'xkcd:dirty purple' #subducted crustal rocks T>900 and P>2GPa
 
 
-steps = np.array(xr.open_dataset(f"_strain.nc").steps.values)
-times = np.array(xr.open_dataset(f"_strain.nc").time.values)
+steps = np.array(open_mandyoc(model_path, "strain").step.values)
+times = np.array(open_mandyoc(model_path, "strain").time.values)
 
 cr = 255.
 color_air = (1.,1.,1.)
@@ -539,9 +537,10 @@ strain_vmax = 0.0
 strain_alpha = 0.2
 
 with pymp.Parallel() as p:
-    lithology = xr.open_dataset("_lithology.nc", cache=False, engine="h5netcdf")["lithology"]
-    strain = xr.open_dataset("_strain.nc", cache=False, engine="h5netcdf")["strain"]
-    temperature = xr.open_dataset("_temperature.nc", cache=False, engine="h5netcdf")["temperature"]
+    lithology = open_mandyoc(model_path, "lithology", cache=False, engine="h5netcdf")["lithology"]
+    strain = open_mandyoc(model_path, "strain", cache=False, engine="h5netcdf")["strain"]
+    temperature = open_mandyoc(model_path, "temperature", cache=False, engine="h5netcdf")["temperature"]
+    density = open_mandyoc(model_path, "density", cache=False, engine="h5netcdf")["density"]
 
     for i in p.range(start, end, step):
         
@@ -558,13 +557,13 @@ with pymp.Parallel() as p:
         # ylims = [-150, 40]
         # ylims = [-400, 40]
 
-        axs[0].imshow(lithology.isel(time=i).values[::-1, :], aspect='auto', extent=(0, Lx/1000, -Lz/1000+40, 40), cmap=cmap, vmin=0, vmax=8, alpha=1.0)  
+        axs[0].imshow(legacy_lithology_codes(lithology.isel(time=i)).values[::-1, :], aspect='auto', extent=(0, Lx/1000, -Lz/1000+40, 40), cmap=cmap, vmin=0, vmax=8, alpha=1.0)  
         
         # strain  = strain_dataset.strain.values[i][::-1,:]
         # temperature = temperature_dataset.temperature.values[i][::-1,:]   
 
         # axs.imshow(np.log10(strain), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=-0.5, vmax=0.9, alpha=0.2)
-        axs[0].imshow(np.log10(strain.isel(time=i).values[::-1, :]), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=strain_vmin, vmax=strain_vmax, alpha=strain_alpha, aspect='auto')
+        axs[0].imshow(np.log10(mask_air(strain.isel(time=i), density.isel(time=i)).values[::-1, :]), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=strain_vmin, vmax=strain_vmax, alpha=strain_alpha, aspect='auto')
         # axs[0].imshow(strain.isel(time=i).values[::-1, :], extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=-0.5, vmax=0.7, alpha=0.2, aspect='auto')
         axs[0].contour(x, z+40, temperature.isel(time=i).values, levels=[500, 600, 700, 800, 900, 1300], colors='r', linewidths=1.0)
 

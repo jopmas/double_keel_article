@@ -9,12 +9,22 @@ import os
 import xarray as xr
 import subprocess
 
+import sys
+path = os.getcwd().split('/')
+machine_path = f'/{path[1]}/{path[2]}' #cat the /home/user/ or /Users/user from system using path
+sys.path.append(os.path.abspath(f"{machine_path}/opt/double_keel_article"))
+sys.path.append(os.path.dirname(os.path.abspath(__file__))) # the repository folder, if the script is run from it
+from functions.mandyoc_nc import open_mandyoc # reads tapioca and old .nc files with the same structure
+
+model_path = os.getcwd()
+steps_dir = "steps" if os.path.isdir("steps") else "." # step*.txt moved to steps/ by 0_organize_outputs.sh
+
 #reading dataset
 # Tdataset = xr.open_dataset("_output_temperature.nc")
 # Pdataset = xr.open_dataset("_output_pressure.nc")
 
-Tdataset = xr.open_dataset("_temperature.nc")
-Pdataset = xr.open_dataset("_pressure.nc")
+Tdataset = open_mandyoc(model_path, "temperature")
+Pdataset = open_mandyoc(model_path, "pressure")
 
 #getting the dimensions
 Nx = int(Tdataset.nx)
@@ -41,7 +51,7 @@ zs = []
 
 verif=0
 
-step_final = Tdataset.steps.values[-1] #14000
+step_final = Tdataset.step.values[-1] #14000
 print("Final step: ", step_final)
 
 x=[]
@@ -52,7 +62,7 @@ layer_vec=[]
 ncores = 16
 #Reading the data of final step
 for rank in range(ncores):
-    file_name = f"step_{step_final}_{rank}.txt"
+    file_name = f"{steps_dir}/step_{step_final}_{rank}.txt"
 
     if os.path.getsize(file_name)>0:
         step_rank = pd.read_csv(
@@ -113,8 +123,8 @@ all_times = []
 
 for i in range(end, start-step, -step):
     print(f"Step: {Tdataset.step.values[i]}")
-    temperature = Tdataset.temperature[i].values.T
-    pressure = Pdataset.pressure[i].values.T
+    temperature = Tdataset.temperature[i].values
+    pressure = Pdataset.pressure[i].values
 
     x=[]
     z=[]
@@ -123,7 +133,7 @@ for i in range(end, start-step, -step):
 
     #getting data from step files
     for rank in range(ncores):
-        file_name = f"step_{Tdataset.step.values[i]}_{rank}.txt"
+        file_name = f"{steps_dir}/step_{Tdataset.step.values[i]}_{rank}.txt"
         if os.path.getsize(file_name)>0:
             A = pd.read_csv(
                 file_name,

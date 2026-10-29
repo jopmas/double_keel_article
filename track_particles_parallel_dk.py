@@ -12,9 +12,18 @@ import multiprocessing #needed to run pymp in mac
 multiprocessing.set_start_method('fork') #needed to run pymp in mac
 import pymp
 import glob
+import sys
+path = os.getcwd().split('/')
+machine_path = f'/{path[1]}/{path[2]}' #cat the /home/user/ or /Users/user from system using path
+sys.path.append(os.path.abspath(f"{machine_path}/opt/double_keel_article"))
+sys.path.append(os.path.dirname(os.path.abspath(__file__))) # the repository folder, if the script is run from it
+from functions.mandyoc_nc import open_mandyoc # reads tapioca and old .nc files with the same structure
+
+model_path = os.getcwd()
+
 #reading dataset
-Tdataset = xr.open_dataset("_temperature.nc")
-Pdataset = xr.open_dataset("_pressure.nc")
+Tdataset = open_mandyoc(model_path, "temperature")
+Pdataset = open_mandyoc(model_path, "pressure")
 
 #getting the dimensions
 Nx = int(Tdataset.nx)
@@ -52,9 +61,9 @@ take_asthenosphere = False
 if(take_specific_time):
     instant_to_take = 450 #Myr
     idx = (np.abs(Tdataset.time.values - instant_to_take)).argmin()
-    step_final = Tdataset.steps.values[idx]
+    step_final = Tdataset.step.values[idx]
 else:
-    step_final = Tdataset.steps.values[-1] #14000
+    step_final = Tdataset.step.values[-1] #14000
 
 
 
@@ -217,11 +226,11 @@ with pymp.Parallel() as p:
     for i in p.range(end, start-step, -step):
         # print('entrei')
     # for i in p.range(end, start, -step):
-        # print(f"Step: {Tdataset.steps.values[i]}")
+        # print(f"Step: {Tdataset.step.values[i]}")
         temperature = Tdataset.temperature[i].values
         pressure = Pdataset.pressure[i].values
         time_current = Tdataset.time.values[i]
-        step_current = Tdataset.steps.values[i]
+        step_current = Tdataset.step.values[i]
         all_time.append(time_current)
         all_step.append(step_current)
         
@@ -232,7 +241,7 @@ with pymp.Parallel() as p:
 
         #getting data from step files
         for rank in range(ncores):
-            file_name = f"steps/step_{Tdataset.steps.values[i]}_{rank}.txt"
+            file_name = f"steps/step_{Tdataset.step.values[i]}_{rank}.txt"
             if os.path.getsize(file_name)>0:
                 A = pd.read_csv(
                     file_name,
@@ -330,7 +339,7 @@ with pymp.Parallel() as p:
         present_pressure_evolution[i] = present_pressure / 1.0e6
         present_temperature_evolution[i] = present_temperature
 
-        np.savetxt(f"track_xzPT_step_{str(Tdataset.steps.values[i]).zfill(6)}.txt", np.c_[vecx_track, vecz_track, present_pressure/1.0E6, present_temperature], fmt="%.5f")
+        np.savetxt(f"track_xzPT_step_{str(Tdataset.step.values[i]).zfill(6)}.txt", np.c_[vecx_track, vecz_track, present_pressure/1.0E6, present_temperature], fmt="%.5f")
 
 # print(f"len of:\n vecx_track_evolution {len(vecx_track_evolution)}\n vecz_track_evolution {len(vecz_track_evolution)}\n present_pressure_evolution {len(present_pressure_evolution)}\n present_temperature_evolution {len(present_temperature_evolution)}")
 
