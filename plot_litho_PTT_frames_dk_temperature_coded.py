@@ -324,6 +324,41 @@ def plot_PT_fields(ax, vertices, x_text, y_text, label, color, fsize_text=6, lin
             weight='light'
         )
 
+def plot_strain_legend(ax, colors, vmin=-0.5, vmax=0.7, alpha=0.2, bbox_to_anchor=(0.05, 0.20, 0.1, 0.25), fsize=10):
+    """
+    Plot the lithology/strain legend box (as in mandyocIO.plot_property) as an inset of the given axis.
+
+    Parameters:
+    - ax: The axis to plot on.
+    - colors: The lithology colors from top to bottom (e.g. [upper crust, lower crust, lithospheric mantle, asthenosphere]).
+    - vmin, vmax: The limits of the strain shading. Must be the same used to plot the strain.
+    - alpha: The alpha transparency of the strain shading. Must be the same used to plot the strain.
+    - bbox_to_anchor: (horizontal position, vertical position, width, height) of the box respective to ax.
+    - fsize: The font size of the label and ticks.
+    """
+    bv1 = inset_axes(ax,
+                     loc='lower right',
+                     width="100%",  # respective to parent_bbox width
+                     height="100%",  # respective to parent_bbox width
+                     bbox_to_anchor=bbox_to_anchor,
+                     bbox_transform=ax.transAxes
+                     )
+
+    #lithology bands (first color on top)
+    nbands = len(colors)
+    bands = np.repeat(np.arange(nbands), 25)[:, None] * np.ones((1, 10))
+    bv1.imshow(bands, extent=[vmin, vmax, 0, 1.5], cmap=ListedColormap(colors), vmin=-0.5, vmax=nbands-0.5, aspect='auto')
+
+    #strain shading
+    xA = np.linspace(vmin, vmax, 10)
+    bv1.imshow(np.tile(xA, (100, 1)), extent=[vmin, vmax, 0, 1.5], zorder=100, alpha=alpha, cmap='Greys', vmin=vmin, vmax=vmax, aspect='auto')
+
+    bv1.set_xlabel(r"log$(\varepsilon_{II})$", size=fsize)
+    bv1.tick_params(axis='x', which='major', labelsize=fsize)
+    bv1.set_xticks(np.linspace(vmin, vmax, 3))
+    bv1.set_yticks([])
+    bv1.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
+
 #################################################
 # Polygon coordenates of ultra high temperature #
 #################################################
@@ -498,6 +533,11 @@ colors = [color_ast,
 cmap = ListedColormap(colors)
 np.seterr(divide='ignore')
 
+#strain shading limits (log10) used in the plot and in the legend
+strain_vmin = -1.5
+strain_vmax = 0.0
+strain_alpha = 0.2
+
 with pymp.Parallel() as p:
     lithology = xr.open_dataset("_lithology.nc", cache=False, engine="h5netcdf")["lithology"]
     strain = xr.open_dataset("_strain.nc", cache=False, engine="h5netcdf")["strain"]
@@ -507,10 +547,12 @@ with pymp.Parallel() as p:
         
         # data = dataset.isel(time=i)
         current_time = float(times[i])
+
         # print(f"Plotting frame {i} of {end} at time {current_time} Myr...")
         # for prop in properties:
         fig, axs = plt.subplots(1, 2, figsize=(12, 3), constrained_layout=True, gridspec_kw={'width_ratios': [1, 0.4]})
-        
+        axs[0].text(0.5, 1.035, f'Time = {current_time:.2f} Myr', bbox=dict(facecolor='white', edgecolor='white', alpha=0.0), fontsize = 14, zorder=52, transform=axs[0].transAxes)
+
         xlims = [0, Lx / 1.0e3]
         ylims = [-Lz / 1.0e3 + 40, 40]
         # ylims = [-150, 40]
@@ -522,8 +564,17 @@ with pymp.Parallel() as p:
         # temperature = temperature_dataset.temperature.values[i][::-1,:]   
 
         # axs.imshow(np.log10(strain), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=-0.5, vmax=0.9, alpha=0.2)
-        axs[0].imshow(np.log10(strain.isel(time=i).values[::-1, :]), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=-0.5, vmax=0.9, alpha=0.2, aspect='auto')
+        axs[0].imshow(np.log10(strain.isel(time=i).values[::-1, :]), extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=strain_vmin, vmax=strain_vmax, alpha=strain_alpha, aspect='auto')
+        # axs[0].imshow(strain.isel(time=i).values[::-1, :], extent=(0, Lx/1000, -Lz/1000+40, 40), cmap="Greys", vmin=-0.5, vmax=0.7, alpha=0.2, aspect='auto')
         axs[0].contour(x, z+40, temperature.isel(time=i).values, levels=[500, 600, 700, 800, 900, 1300], colors='r', linewidths=1.0)
+
+        if(plot_colorbar):
+            plot_strain_legend(axs[0], colors=[color_uc, color_lc, color_lit, color_ast],
+                               vmin=strain_vmin, vmax=strain_vmax, alpha=strain_alpha,
+                               bbox_to_anchor=(0.05,#horizontal position respective to parent_bbox or "loc" position
+                                               0.20,# vertical position
+                                               0.095,# width
+                                               0.25))# height
               
 
         for particle, particle_layer, T_max, P_max in zip(range(n), particles_layers, T_maxs, P_maxs):
