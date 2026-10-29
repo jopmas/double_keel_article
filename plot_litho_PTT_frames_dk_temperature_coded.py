@@ -322,7 +322,6 @@ def plot_PT_fields(ax, vertices, x_text, y_text, label, color, fsize_text=6, lin
             color=color,
             ha='center',           # centraliza horizontalmente
             va='center',           # centraliza verticalmente
-            weight='light'
         )
 
 def plot_strain_legend(ax, colors, vmin=-0.5, vmax=0.7, alpha=0.2, bbox_to_anchor=(0.05, 0.20, 0.1, 0.25), fsize=10):
