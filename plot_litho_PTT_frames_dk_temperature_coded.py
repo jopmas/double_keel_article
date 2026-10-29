@@ -251,6 +251,9 @@ def plot_particles_of_a_layer_temperature_coded(axs, i, current_time, time, x_tr
     - plot_steps: Whether to plot the steps.
     '''
 
+    if not (T_max >= 400.0): # particles that never reach 400 oC (or without temperature) are not plotted
+        return
+
     # if(T_max >= 400.0 and T_max < 900.0):
     #     color = color_mid_T
     # if(T_max >= 900.0):
