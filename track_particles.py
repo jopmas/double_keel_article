@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import xarray as xr
 import subprocess
+import glob
 
 import sys
 path = os.getcwd().split('/')
@@ -58,8 +59,9 @@ x=[]
 z=[]
 id_vec=[]
 layer_vec=[]
-# ncores = 20
-ncores = 16
+steps0 = glob.glob(f"{steps_dir}/step_0_*.txt")
+ncores = len(steps0) #number of cores used in the model (one step file per core)
+print(ncores, "cores detected")
 #Reading the data of final step
 for rank in range(ncores):
     file_name = f"{steps_dir}/step_{step_final}_{rank}.txt"
